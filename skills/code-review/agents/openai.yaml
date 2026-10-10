@@ -1,0 +1,3 @@
+interface:
+  display_name: "Code Review"
+  short_description: "Human-triggered Change Review against the Spec"
