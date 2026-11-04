@@ -9,8 +9,16 @@ The set of code differences under review, taken between a fixed base and the cur
 _Avoid_: PR, patch, diff
 
 **Spec**:
-The written statement of what a Change was meant to do: requirements with acceptance criteria, plus any recorded design, task plan and decisions, as produced by spec-driven development.
+The written statement of what a Change was meant to do: requirements with acceptance criteria and Scenarios, its Decisions, and any recorded design and task plan, as produced by spec-driven development.
 _Avoid_: issue, ticket, task, requirements doc
+
+**Ticket**:
+A slice of a Spec's planned work sized to about one day, demoable on its own, published to the issue tracker so the product team can follow it. It is made of Tasks and names the Tickets that block it.
+_Avoid_: issue, story, epic
+
+**Task**:
+An atomic unit of planned work inside exactly one Ticket, finished by exactly one commit. Every Spec has Tasks, whatever its scope.
+_Avoid_: step, subtask, todo
 
 **Finding**:
 One problem a reviewer raises about a Spec or a Change, with its evidence, stated fully enough that anyone can assess it later without the reviewer.
@@ -31,6 +39,14 @@ _Avoid_: code review (alone), PR review
 **Execution Approval**:
 The human's explicit go-ahead to execute planned work. For a new Spec it comes only after a Spec Review whose Findings all have Dispositions; for fixes, only after the Findings they address have Dispositions. Agreeing to a Spec, design or task plan along the way is provisional and never authorizes building, and neither does accepting a Finding.
 _Avoid_: spec approval, sign-off
+
+**Decision**:
+A choice made while planning, with its reason and the alternatives given up. It binds either one feature or the whole project, lives in the Grilling Record of the session that made it, and stays active until a later Decision supersedes it.
+_Avoid_: ADR, architecture decision record, AD
+
+**Grilling Record**:
+The complete written account of one grilling session: the context, every question asked with its options and answer, the Decisions it produced and their consequences. A feature's Grilling Record also collects that feature's later Design Decisions and review amendments, so one file holds its whole decision history; the Spec links to it.
+_Avoid_: ADR, decision record, session notes
 
 **Claim**:
 A statement, made by whoever produced or checked a Change, that something about it is true: a task is done, a requirement is verified, tests pass, a decision was taken for a reason.
