@@ -57,7 +57,7 @@ After the table is written to `validation.md`, run the mechanics on all Scenario
 - Where the spec defines a precise outcome (specific status code, field value, error message, state), the test assertion MUST target that exact outcome - not just that an assertion exists.
 - Where the spec does NOT define a precise outcome, mark as **⚠️ Spec-precision gap** and flag it in the report. Do NOT silently pass a vague assertion.
 - Evidence-or-zero: a criterion with no `file:line` citation counts as NOT covered. This holds for both proof types.
-- One row per Scenario. Two rows for the same ID, or a second table for `inspect` Scenarios, make `validate_scenarios.py` fail.
+- One row per Scenario. Two rows for the same ID make `validate_scenarios.py` fail, whichever table they sit in, so keep every Scenario in this one table.
 - An `inspect` Result is `PASS` or `GAP`. Interactive UAT (level 3 above) is a separate step for user-facing features; it is not a proof type.
 
 ### 3. Check Edge Cases
