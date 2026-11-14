@@ -153,9 +153,9 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: PROOF-01, GRILL-05, TKT-01 (infrastructure for their tests)
 
 **Done when**:
-- [ ] `python3 -c "import sys; sys.path.insert(0, 'tests'); import fixtures"` succeeds
-- [ ] the helper builds a repo from `tests/fixtures/base/` and `validate_scenarios.py` reports no claim coming from a fixture file
-- [ ] Gate check passes: build
+- [x] `python3 -c "import sys; sys.path.insert(0, 'tests'); import fixtures"` succeeds
+- [x] the helper builds a repo from `tests/fixtures/base/` and `validate_scenarios.py` reports no claim coming from a fixture file
+- [x] Gate check passes: build
 
 **Tests**: none (test infrastructure; proves no Scenario)
 **Scenarios**: none - this task writes no tests
