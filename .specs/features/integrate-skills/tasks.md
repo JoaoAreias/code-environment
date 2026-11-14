@@ -218,9 +218,9 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: GRILL-05, GRILL-06, GRILL-09
 
 **Done when**:
-- [ ] the five Scenario tests pass and carry their Scenario text verbatim
-- [ ] `validate_spec.py integrate-skills` exits 0 on this feature
-- [ ] Gate check passes: quick, scenarios, build
+- [x] the five Scenario tests pass and carry their Scenario text verbatim
+- [x] `validate_spec.py integrate-skills` exits 0 on this feature
+- [x] Gate check passes: quick, scenarios, build
 
 **Tests**: integration
 **Scenarios**: GRILL-05.S1, GRILL-05.S2, GRILL-06.S1, GRILL-09.S1, GRILL-09.S2

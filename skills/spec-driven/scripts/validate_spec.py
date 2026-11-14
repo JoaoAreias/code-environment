@@ -14,7 +14,9 @@ What it checks (heuristic markdown inspection, not a full parser):
   ERROR  - an acceptance criterion has no requirement ID or no SHALL (not EARS-shaped)
   ERROR  - an acceptance criterion has no Scenario, or a Scenario lacks Given/When/Then,
            sits under the wrong criterion, or reuses an ID
-  ERROR  - an Assumptions row has an empty "Chosen default" or "Rationale" cell
+  ERROR  - in `Decisions & Assumptions`, a Decisions row has an empty "Choice" or
+           "Rationale" cell, or an Assumptions row has an empty "Chosen default" or
+           "Rationale" cell (tables are found by header name; a body of `none` is accepted)
   ERROR  - a Requirement Traceability row has a malformed ID, or a criterion ID is missing from it
   WARN   - no `**Scope**:` line (Medium+ rules applied)
   WARN   - an AC has SHALL but no recognizable EARS lead keyword
@@ -38,14 +40,14 @@ import os
 import re
 import sys
 
-from scenarios_lib import parse_spec, spec_scope
+from scenarios_lib import find_tables, parse_spec, spec_scope
 
 REQUIRED_SECTIONS = [
     "Problem Statement",
     "Existing Capabilities",
     "Standards",
     "Out of Scope",
-    "Assumptions & Open Questions",
+    "Decisions & Assumptions",
     "User Stories",
     "Requirement Traceability",
 ]
@@ -53,6 +55,7 @@ REQUIRED_SECTIONS_SMALL = [
     "Problem Statement",
     "Existing Capabilities",
     "Standards",
+    "Decisions & Assumptions",
     "Acceptance Criteria",
     "Steps",
 ]
@@ -191,39 +194,38 @@ def check(spec_path):
     if not parsed["acs"]:
         warnings.append("no acceptance criteria with IDs parsed - is the spec filled in?")
 
+    # 3. Decisions & Assumptions: table cells filled. Tables are found by header name.
+    b = section_bounds(lines, "Decisions & Assumptions")
+    body = [lines[i].strip() for i in range(*b) if lines[i].strip()] if b else []
+    if b and [ln.lower().rstrip(".") for ln in body] != ["none"]:
+        section = lines[b[0]:b[1]]
+        template_seen = False
+        for kind, headers, required in (
+            ("decision", ("ID", "Choice"), ("Choice", "Rationale")),
+            ("assumption", ("Assumption", "Chosen default"), ("Chosen default", "Rationale")),
+        ):
+            for row in (r for t in find_tables(section, *headers) for r in t):
+                first = row[""]
+                if PLACEHOLDER_RE.match(first) and PLACEHOLDER_RE.match(row.get(required[0].lower(), "")):
+                    template_seen = True
+                    continue
+                for name in required:
+                    cell = row.get(name.lower(), "")
+                    if not cell or PLACEHOLDER_RE.match(cell):
+                        errors.append(f"{kind} '{first[:40]}' has empty '{name}'")
+        if template_seen:
+            warnings.append("Decisions & Assumptions still contains template placeholder rows")
+        if not small:
+            # open questions line
+            oq = [lines[i] for i in range(*b) if "open questions" in lines[i].lower()]
+            oq_clean = re.sub(r"[*_]", "", " ".join(oq)).lower()
+            if not oq:
+                warnings.append("no 'Open questions:' line in Decisions & Assumptions")
+            elif not re.search(r"open questions.*:\s*none", oq_clean):
+                warnings.append("open questions do not read as resolved ('Open questions: none')")
+
     if small:
         return errors, warnings
-
-    # 3. Assumptions table cells filled.
-    b = section_bounds(lines, "Assumptions & Open Questions")
-    if b:
-        rows = [lines[i] for i in range(*b) if lines[i].strip().startswith("|")]
-        data = [r for r in rows if not is_separator(r)]
-        # drop the header row (first table row)
-        if data:
-            data = data[1:]
-        template_seen = False
-        for r in data:
-            cells = split_row(r)
-            if len(cells) < 3:
-                continue
-            assumption, chosen, rationale = cells[0], cells[1], cells[2]
-            if PLACEHOLDER_RE.match(assumption) and PLACEHOLDER_RE.match(chosen):
-                template_seen = True
-                continue
-            if not chosen or PLACEHOLDER_RE.match(chosen):
-                errors.append(f"assumption '{assumption[:40]}' has empty 'Chosen default'")
-            if not rationale or PLACEHOLDER_RE.match(rationale):
-                errors.append(f"assumption '{assumption[:40]}' has empty 'Rationale'")
-        if template_seen:
-            warnings.append("Assumptions table still contains template placeholder rows")
-        # open questions line
-        oq = [lines[i] for i in range(*b) if "open questions" in lines[i].lower()]
-        oq_clean = re.sub(r"[*_]", "", " ".join(oq)).lower()
-        if not oq:
-            warnings.append("no 'Open questions:' line in Assumptions section")
-        elif not re.search(r"open questions.*:\s*none", oq_clean):
-            warnings.append("open questions do not read as resolved ('Open questions: none')")
 
     # 4. Requirement traceability IDs.
     b = section_bounds(lines, "Requirement Traceability")
