@@ -174,9 +174,9 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: PROOF-01
 
 **Done when**:
-- [ ] the five Scenario tests pass and carry their Scenario text verbatim; their fixtures are `.md` files under `tests/fixtures/`
-- [ ] a spec with no `**Proof**:` lines behaves exactly as before (every Scenario needs a test)
-- [ ] Gate check passes: quick, scenarios, build
+- [x] the five Scenario tests pass and carry their Scenario text verbatim; their fixtures are `.md` files under `tests/fixtures/`
+- [x] a spec with no `**Proof**:` lines behaves exactly as before (every Scenario needs a test)
+- [x] Gate check passes: quick, scenarios, build
 
 **Tests**: integration
 **Scenarios**: PROOF-01.S1, PROOF-01.S2, PROOF-01.S3, PROOF-01.S4, PROOF-01.S5
