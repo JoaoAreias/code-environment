@@ -14,6 +14,8 @@ What it checks (heuristic markdown inspection, not a full parser):
   ERROR  - a task with tests lists no `Scenarios`, names a Scenario the spec does
            not define, or a spec Scenario is assigned to no task
   ERROR  - a task depends on a task in a LATER phase (dependencies point back only)
+  ERROR  - a task is listed in no Ticket (`### K<n>:` under `## Tickets`) or in more
+           than one, or a Ticket's `Blocked by` names a Ticket not listed before it
   ERROR  - a dependency edge shown in the diagram has no matching `Depends on`
            (and vice-versa) when both sides are parseable
   WARN   - a task's `Where` names multiple files (granularity smell -> split it)
@@ -39,8 +41,9 @@ import sys
 
 from scenarios_lib import SCEN_ID_RE, parse_spec
 
-REQUIRED_SECTIONS = ["Test Coverage Matrix", "Gate Check Commands", "Execution Plan", "Task Breakdown"]
+REQUIRED_SECTIONS = ["Test Coverage Matrix", "Gate Check Commands", "Tickets", "Execution Plan", "Task Breakdown"]
 TASK_RE = re.compile(r"^#{2,4}\s+(T\d+)\s*:", re.IGNORECASE)
+TICKET_RE = re.compile(r"^#{2,4}\s+(K\d+)\s*:", re.IGNORECASE)
 EDGE_RE = re.compile(r"\bT\d+\b")
 FILE_HINT_RE = re.compile(r"[\w./-]+\.\w{1,6}\b")
 
@@ -113,6 +116,54 @@ def parse_tasks(lines):
         if gm:
             tasks[current]["gate"] = gm.group(1).strip()
     return tasks
+
+
+def parse_tickets(lines):
+    """Return the Tickets of the `## Tickets` section, in listing order.
+
+    Each Ticket is (id, {'tasks': [task ids], 'blocked_by': [ticket ids]}). Fix
+    Tickets are ordinary Tickets.
+    """
+    tickets = []
+    in_section = False
+    for ln in lines:
+        stripped = ln.strip()
+        if re.match(r"^##\s", stripped):
+            in_section = bool(re.match(r"^##\s+Tickets\b", stripped))
+            continue
+        if not in_section:
+            continue
+        m = TICKET_RE.match(stripped)
+        if m:
+            tickets.append((m.group(1).upper(), {"tasks": [], "blocked_by": []}))
+            continue
+        if not tickets:
+            continue
+        tm = re.match(r"^\*{0,2}Tasks\*{0,2}\s*:\s*(.*)$", stripped, re.IGNORECASE)
+        if tm:
+            tickets[-1][1]["tasks"] = EDGE_RE.findall(tm.group(1).upper())
+        bm = re.match(r"^\*{0,2}Blocked by\*{0,2}\s*:\s*(.*)$", stripped, re.IGNORECASE)
+        if bm:
+            tickets[-1][1]["blocked_by"] = re.findall(r"\bK\d+\b", bm.group(1).upper())
+    return tickets
+
+
+def ticket_problems(tasks, tickets):
+    """Every task sits in exactly one Ticket; Blocked by names only earlier Tickets."""
+    problems = []
+    for tid in tasks:
+        homes = [kid for kid, k in tickets if tid in k["tasks"]]
+        if not homes:
+            problems.append(f"{tid} is listed in no Ticket - add it to a Ticket's `Tasks` field")
+        elif len(homes) > 1:
+            problems.append(f"{tid} is listed in more than one Ticket: {', '.join(homes)}")
+    earlier = set()
+    for kid, k in tickets:
+        for dep in k["blocked_by"]:
+            if dep not in earlier:
+                problems.append(f"{kid} is Blocked by {dep}, which is not listed before it - `Blocked by` may only name earlier Tickets")
+        earlier.add(kid)
+    return problems
 
 
 def parse_phase_membership(lines):
@@ -209,6 +260,10 @@ def check(tasks_path):
                     errors.append(f"{tid}: Scenario {sid} is not defined in spec.md")
         for sid in sorted(known - assigned):
             errors.append(f"Scenario {sid} is assigned to no task - nothing will prove it")
+
+    # Tickets: membership and blocking order.
+    if section_present(lines, "Tickets"):
+        errors.extend(ticket_problems(tasks, parse_tickets(lines)))
 
     # Forward-phase dependency.
     membership = parse_phase_membership(lines)

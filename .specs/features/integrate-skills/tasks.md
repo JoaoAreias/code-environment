@@ -259,9 +259,9 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: TKT-03, TKT-04, TKT-05
 
 **Done when**:
-- [ ] the four Scenario tests pass
-- [ ] `validate_tasks.py integrate-skills` exits 0 on this file
-- [ ] Gate check passes: quick, scenarios, build, plan
+- [x] the four Scenario tests pass
+- [x] `validate_tasks.py integrate-skills` exits 0 on this file
+- [x] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
 **Scenarios**: TKT-03.S1, TKT-03.S2, TKT-04.S1, TKT-05.S1
