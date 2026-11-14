@@ -195,9 +195,9 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: PROOF-02
 
 **Done when**:
-- [ ] neither file tells an agent to fail a Scenario only because it has no test when its proof type is `inspect`
-- [ ] `validate.md` describes one results table and its template shows an `inspect` row in it
-- [ ] Gate check passes: full (plan excluded until T6)
+- [x] neither file tells an agent to fail a Scenario only because it has no test when its proof type is `inspect`
+- [x] `validate.md` describes one results table and its template shows an `inspect` row in it
+- [x] Gate check passes: full (plan excluded until T6)
 
 **Tests**: inspect
 **Scenarios**: PROOF-02.S1

@@ -32,9 +32,12 @@ Go through tasks.md:
 
 ### 2. Scenario-Anchored Check
 
-First run the mechanics: `python3 <skill-dir>/scripts/validate_scenarios.py <feature> --since <diff base>`. Any error (Scenario without a test, unknown ID, drifted text, a test claiming several Scenarios, an Unclaimed Test the Change touched) is a gap.
+Every Scenario in `spec.md` has a proof type: `test` (the default) or `inspect`, set by the `**Proof**:` line after the Scenario. The Verifier checks every Scenario of either type and records each one in the Scenario-Anchored table below. This is the only results table: exactly one row per Scenario, whatever its proof type.
 
-Then, for each Scenario in `spec.md`, the Verifier re-derives the **spec-defined expected outcome** from its Then steps and confirms the claiming test's actual assertion matches it:
+For each Scenario, re-derive the **spec-defined expected outcome** from its Then steps, then:
+
+- **`test` Scenario:** confirm the claiming test's actual assertion matches that outcome. The evidence cell holds the test's `file:line` and the assertion expression.
+- **`inspect` Scenario:** read the final files the Scenario is about (prompts, configuration, infrastructure code) and decide whether they produce that outcome. The evidence cell holds the `file:line` read and a one-sentence reason, in place of a test assertion. Infrastructure code may cite command output instead. An `inspect` Scenario has no test by design; that alone is never a gap.
 
 ```markdown
 ### P1: [Story Title]
@@ -44,13 +47,18 @@ Then, for each Scenario in `spec.md`, the Verifier re-derives the **spec-defined
 | Scenario | Spec-defined outcome (Then) | `file:line` + assertion expression | Result |
 | -------- | --------------------------- | ---------------------------------- | ------ |
 | [FEAT]-01.S1 | [precise value/state from spec] | `path/to/test.ts:42` - `expect(result.field).toBe(expected)` | ✅ PASS / ❌ GAP / ⚠️ Spec-precision gap |
+| [FEAT]-02.S1 | [precise value/state from spec] | `skills/demo/SKILL.md:12` - step 3 states the rule as the Then step requires | ✅ PASS / ❌ GAP |
 ```
+
+After the table is written to `validation.md`, run the mechanics on all Scenarios: `python3 <skill-dir>/scripts/validate_scenarios.py <feature> --since <diff base>`. It reads the `Scenario` and `Result` columns of this table by header name, so keep those two header names. Any error is a gap: a `test` Scenario without a test, an `inspect` Scenario without exactly one row whose Result is `PASS`, an unknown ID, drifted text, a test claiming several Scenarios, or an Unclaimed Test the Change touched.
 
 **Rules:**
 
 - Where the spec defines a precise outcome (specific status code, field value, error message, state), the test assertion MUST target that exact outcome - not just that an assertion exists.
 - Where the spec does NOT define a precise outcome, mark as **⚠️ Spec-precision gap** and flag it in the report. Do NOT silently pass a vague assertion.
-- Evidence-or-zero: a criterion with no `file:line` citation counts as NOT covered.
+- Evidence-or-zero: a criterion with no `file:line` citation counts as NOT covered. This holds for both proof types.
+- One row per Scenario. Two rows for the same ID, or a second table for `inspect` Scenarios, make `validate_scenarios.py` fail.
+- An `inspect` Result is `PASS` or `GAP`. Interactive UAT (level 3 above) is a separate step for user-facing features; it is not a proof type.
 
 ### 3. Check Edge Cases
 
@@ -235,13 +243,16 @@ The Verifier returns this block to the orchestrator after completing all checks:
 
 ## Scenario-Anchored Check
 
-`validate_scenarios.py <feature> --since <base>`: [0 errors | list]
+One row per Scenario, `test` and `inspect` alike. An `inspect` row cites the `file:line` read and a one-sentence reason in place of a test assertion.
 
 | Scenario | Spec-defined outcome (Then) | `file:line` + assertion | Result |
 | -------- | --------------------------- | ----------------------- | ------ |
 | PAY-01.S1 | [precise value/state from spec] | `path/to/test.ts:42` - `expect(result.field).toBe(expected)` | ✅ PASS |
 | PAY-02.S1 | [expected value]     | `path/to/test.ts:88` - `expect(res.status).toBe(400)` | ✅ PASS |
 | PAY-03.S1 | not precisely defined in spec | - | ⚠️ Spec-precision gap |
+| PAY-04.S1 | [the rule the prompt must state] | `skills/pay/SKILL.md:12` - step 3 states the rule as the Then step requires | ✅ PASS |
+
+`validate_scenarios.py <feature> --since <base>` (run after this table is written): [0 errors | list]
 
 **Status**: ✅ All Scenarios proven / ❌ Gaps present / ⚠️ Spec-precision gaps flagged
 

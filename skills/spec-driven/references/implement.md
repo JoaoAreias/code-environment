@@ -84,7 +84,7 @@ Before creating any new exported function, class, module or endpoint, look for a
 
 If the task includes tests (per the Tests field and **Test Coverage Matrix** in tasks.md):
 
-1. Write one test per Scenario listed in the task's `Scenarios` field. Each test proves exactly one Scenario.
+1. Write one test per `test` Scenario listed in the task's `Scenarios` field. Each test proves exactly one Scenario. A Scenario marked `**Proof**: inspect` in `spec.md` gets no test: the Verifier checks it once, after the last task ([validate.md](validate.md) section 2).
 2. Put the Scenario's ID and its Given/When/Then text, **copied verbatim from `spec.md`**, in the test's docstring or a comment directly above it ([standards.md](standards.md) section 3).
 3. The test asserts the outcome the Scenario names, through the public interface - **never** what the code currently does. Where the spec does not define a precise outcome, note it as a **spec-precision gap** rather than writing a vague assertion and passing silently.
 4. Mock only at system boundaries (network, clock, randomness, third-party APIs). A test that mocks internal collaborators or asserts their call counts is Implementation-Coupled; rewrite it.
@@ -122,7 +122,7 @@ Run the gate check command from the task definition. This is MANDATORY - not "if
 
 1. Look up the command for the task's Gate level (quick/full/build) in the **Gate Check Commands** section of tasks.md, then run it
 2. Non-zero exit code = STOP. Fix the failure. Re-run. Do not proceed until it passes.
-3. Run `python3 <skill-dir>/scripts/validate_scenarios.py <feature> --only <this task's Scenario IDs> --since HEAD`. It fails when a Scenario has no test, a test's Scenario text drifted, or a test this task touched claims no Scenario.
+3. Run `python3 <skill-dir>/scripts/validate_scenarios.py <feature> --only <this task's test Scenario IDs> --since HEAD`. Pass only the IDs whose proof type is `test` (a Scenario with no `**Proof**:` line is `test`). Never pass an `inspect` ID here: its proof is a row the Verifier writes into `validation.md` after the last task, so it cannot pass yet. A task whose Scenarios are all `inspect` skips this command. The command fails when a `test` Scenario has no test, a test's Scenario text drifted, or a test this task touched claims no Scenario.
 4. Confirm the test count matches expectations (no tests were silently deleted or skipped; removals carry a `Removed test:` line)
 
 **Tiered gates (from the Gate Check Commands section of tasks.md):**
@@ -390,7 +390,7 @@ If you are unsure whether more tasks remain, check `tasks.md`: if every task is 
 
 - Command: [gate check command]
 - Result: [X passed, 0 failed]
-- `validate_scenarios.py --only [IDs] --since HEAD`: [0 errors]
+- `validate_scenarios.py --only [test Scenario IDs] --since HEAD`: [0 errors | skipped - only inspect Scenarios]
 - Test count: [N - matches planned test count]
 
 ### Post-Gate
