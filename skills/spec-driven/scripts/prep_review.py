@@ -14,7 +14,8 @@ Usage:
   python3 <skill-dir>/scripts/prep_review.py change [feature] [--root DIR]
           [--base REF] [--no-spec] [--unverified]
 
-spec:   commits the plan (.specs/features/<feature>/ plus .specs/decisions/,
+spec:   requires tasks.md at every scope and design.md at Medium, Large or Complex;
+        commits the plan (.specs/features/<feature>/ plus .specs/decisions/,
         .specs/STATE.md, the lessons store, CONTEXT-MAP.md and every CONTEXT.md)
         so a reviewer's stray edit can always be undone, refusing when other
         uncommitted changes exist.
@@ -233,6 +234,12 @@ def prep_spec(args, root):
     rel = os.path.relpath(fdir, root)
     if not os.path.isfile(os.path.join(fdir, "spec.md")):
         raise Stop(f"{rel}/spec.md does not exist; finish Specify first")
+    spec_text = open(os.path.join(fdir, "spec.md"), encoding="utf-8").read()
+    scope = spec_scope(spec_text) or "unknown"
+    if not os.path.isfile(os.path.join(fdir, "tasks.md")):
+        raise Stop(f"{rel}/tasks.md does not exist; every feature needs Tasks and Tickets before a Spec Review. Run the Tasks phase first")
+    if scope in ("Medium", "Large", "Complex") and not os.path.isfile(os.path.join(fdir, "design.md")):
+        raise Stop(f"{rel}/design.md does not exist; a {scope} feature needs a Design before a Spec Review. Run the Design phase first")
     plan = [rel + "/", *SHARED_PLAN_PATHS]
     dirty = dirty_paths(root)
     outside = [p for p in dirty if not in_plan(p, plan)]
@@ -253,8 +260,6 @@ def prep_spec(args, root):
     n, report, prev = next_run(fdir, "spec-review")
     standards, lint = standard_sources(root)
     present = [f for f in ("spec.md", "design.md", "tasks.md") if os.path.isfile(os.path.join(fdir, f))]
-    spec_text = open(os.path.join(fdir, "spec.md"), encoding="utf-8").read()
-    scope = spec_scope(spec_text) or "unknown"
     records = feature_records(root, feature)
     decisions = ["- Grilling Records: " + (", ".join(f"`{r}`" for r in records)
                                            or "none named for this feature in `.specs/decisions/summary.md`")]
@@ -284,8 +289,6 @@ def prep_spec(args, root):
         "",
     ]
     for script, target in (("validate_spec.py", feature), ("validate_tasks.py", feature)):
-        if script == "validate_tasks.py" and "tasks.md" not in present:
-            continue
         rc, text = script_summary(root, os.path.join(HERE, script), target, "--root", root)
         out += [f"`{script}` exit {rc}:", "```", text, "```"]
     return "\n".join(out)

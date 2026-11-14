@@ -322,8 +322,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: TKT-01, TKT-02
 
 **Done when**:
-- [ ] the three Scenario tests pass
-- [ ] Gate check passes: quick, scenarios, build, plan
+- [x] the three Scenario tests pass
+- [x] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
 **Scenarios**: TKT-01.S1, TKT-02.S1, TKT-02.S2

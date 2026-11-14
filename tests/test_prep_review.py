@@ -103,5 +103,47 @@ class DecisionSources(unittest.TestCase):
         self.assertRegex(out, r"(?m)^- Legacy decision source: `\.specs/features/re-demo/context\.md`$")
 
 
+class MandatoryPlanFiles(unittest.TestCase):
+
+    def test_small_spec_without_tasks(self):
+        """
+        Scenario: TKT-01.S1 small spec without tasks
+          Given a fixture repository with a Small-scope spec for feature demo and no tasks.md
+          When prep_review.py spec demo runs
+          Then it exits 1
+          And its output starts with "STOP" and names tasks.md
+        """
+        repo = fixtures.build_repo(self, "spec-small-none")
+        code, out = prep(repo, "demo")
+        self.assertEqual(code, 1, out)
+        self.assertRegex(out, r"\ASTOP: .*tasks\.md")
+
+    def test_medium_spec_without_design(self):
+        """
+        Scenario: TKT-02.S1 medium spec without design
+          Given a fixture repository with a Medium-scope spec and a tasks.md for feature demo and no design.md
+          When prep_review.py spec demo runs
+          Then it exits 1
+          And its output starts with "STOP" and names design.md
+        """
+        repo = fixtures.build_repo(self, "base", "spec-medium")
+        code, out = prep(repo, "demo")
+        self.assertEqual(code, 1, out)
+        self.assertRegex(out, r"\ASTOP: .*design\.md")
+
+    def test_small_spec_needs_no_design(self):
+        """
+        Scenario: TKT-02.S2 small spec needs no design
+          Given a fixture repository with a Small-scope spec and a tasks.md for feature demo and no design.md
+          When prep_review.py spec demo runs
+          Then its output does not name design.md in a STOP message
+        """
+        repo = fixtures.build_repo(self, "base", "spec-small-none")
+        code, out = prep(repo, "demo")
+        self.assertEqual(code, 0, out)
+        self.assertNotRegex(out, r"(?m)^STOP")
+        self.assertIn("## Review context (Spec Review)", out)
+
+
 if __name__ == "__main__":
     unittest.main()
