@@ -14,9 +14,10 @@ Usage:
   python3 <skill-dir>/scripts/prep_review.py change [feature] [--root DIR]
           [--base REF] [--no-spec] [--unverified]
 
-spec:   commits the plan (.specs/features/<feature>/ plus .specs/STATE.md and the
-        lessons store) so a reviewer's stray edit can always be undone, refusing
-        when other uncommitted changes exist.
+spec:   commits the plan (.specs/features/<feature>/ plus .specs/decisions/,
+        .specs/STATE.md, the lessons store, CONTEXT-MAP.md and every CONTEXT.md)
+        so a reviewer's stray edit can always be undone, refusing when other
+        uncommitted changes exist.
 change: requires a clean tree, a non-empty Change, a Spec (unless --no-spec), and
         a PASS validation.md (unless --unverified). A FAIL verdict always stops.
 Both:   refresh the graphify graph (graphify-out/ is kept out of git through
@@ -34,7 +35,7 @@ import shutil
 import subprocess
 import sys
 
-from scenarios_lib import git, spec_scope
+from scenarios_lib import find_tables, git, spec_is_native, spec_scope
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL_DIR = os.path.dirname(HERE)
@@ -44,6 +45,9 @@ STANDARD_SOURCES = [
 ]
 STANDARD_GLOBS = ["docs/**/*standard*.md", "docs/**/*style*.md", "docs/**/*convention*.md",
                   "docs/**/*guideline*.md", ".cursor/rules/*", ".claude/rules/*"]
+# Shared planning files the pre-review commit protects next to the feature folder.
+# Every file named CONTEXT.md is protected too (see in_plan).
+SHARED_PLAN_PATHS = [".specs/decisions/", ".specs/STATE.md", ".specs/LESSONS.md", ".specs/lessons.json", "CONTEXT-MAP.md"]
 LINT_CONFIGS = [".eslintrc*", "eslint.config.*", "biome.json*", "ruff.toml", ".ruff.toml", "pyproject.toml",
                 ".golangci.y*ml", ".rubocop.yml", "detekt.yml", ".pre-commit-config.yaml", "tsconfig.json"]
 
@@ -174,6 +178,26 @@ def script_summary(root, *args, keep=25):
     return rc, "\n".join(body)
 
 
+def in_plan(path, plan):
+    return os.path.basename(path) == "CONTEXT.md" or any(path == x or path.startswith(x) for x in plan)
+
+
+def feature_records(root, feature):
+    """Repo-relative paths of the Grilling Records whose summary.md row names `feature` in its Specs cell."""
+    path = os.path.join(root, ".specs", "decisions", "summary.md")
+    if not os.path.isfile(path):
+        return []
+    records = []
+    for table in find_tables(open(path, encoding="utf-8", errors="replace").read().splitlines(), "File", "Specs"):
+        for row in table:
+            if feature not in re.findall(r"[\w.-]+", row.get("specs", "")):
+                continue
+            link = re.search(r"\]\(([^)]+)\)", row.get("file", ""))
+            name = link.group(1) if link else row.get("file", "").strip("` ")
+            records.append(os.path.normpath(os.path.join(".specs", "decisions", name)))
+    return records
+
+
 def pick_feature(root, feature, changed=None):
     feats = list_features(root)
     if feature:
@@ -209,15 +233,14 @@ def prep_spec(args, root):
     rel = os.path.relpath(fdir, root)
     if not os.path.isfile(os.path.join(fdir, "spec.md")):
         raise Stop(f"{rel}/spec.md does not exist; finish Specify first")
-    plan = [rel + "/", ".specs/STATE.md", ".specs/LESSONS.md", ".specs/lessons.json"]
-    outside = [p for p in dirty_paths(root) if not any(p == x or p.startswith(x) for x in plan)]
+    plan = [rel + "/", *SHARED_PLAN_PATHS]
+    dirty = dirty_paths(root)
+    outside = [p for p in dirty if not in_plan(p, plan)]
     if outside:
         raise Stop("uncommitted changes outside the plan would not be protected by the pre-review commit:\n  "
                    + "\n  ".join(outside[:20]) + "\nCommit or stash them, then retry.")
-    inside = [p for p in dirty_paths(root)]
-    if inside:
-        existing = [p for p in plan if os.path.exists(os.path.join(root, p.rstrip("/")))]
-        must_git(root, "add", "--", *existing)
+    if dirty:
+        must_git(root, "add", "--", *dirty)
         msg = f"docs(spec): snapshot {feature} before spec review"
         rc, out, err = git(root, "commit", "-m", msg)
         if rc != 0:
@@ -229,8 +252,16 @@ def prep_spec(args, root):
     graph = refresh_graph(root)
     n, report, prev = next_run(fdir, "spec-review")
     standards, lint = standard_sources(root)
-    present = [f for f in ("spec.md", "context.md", "design.md", "tasks.md") if os.path.isfile(os.path.join(fdir, f))]
-    scope = spec_scope(open(os.path.join(fdir, "spec.md"), encoding="utf-8").read()) or "unknown"
+    present = [f for f in ("spec.md", "design.md", "tasks.md") if os.path.isfile(os.path.join(fdir, f))]
+    spec_text = open(os.path.join(fdir, "spec.md"), encoding="utf-8").read()
+    scope = spec_scope(spec_text) or "unknown"
+    records = feature_records(root, feature)
+    decisions = ["- Grilling Records: " + (", ".join(f"`{r}`" for r in records)
+                                           or "none named for this feature in `.specs/decisions/summary.md`")]
+    if os.path.isfile(os.path.join(fdir, "context.md")):
+        decisions.append(f"- Legacy decision source: `{rel}/context.md`")
+    if not spec_is_native(spec_text):
+        decisions.append("- Decisions log: `.specs/STATE.md`" if os.path.isfile(os.path.join(root, ".specs", "STATE.md")) else "- Decisions log: none")
 
     out = []
     header(out, "Spec Review", root)
@@ -240,7 +271,7 @@ def prep_spec(args, root):
         f"- Reviewed commit: `{sha}` ({snap})",
         f"- Run: SR{n} · write the report to `{os.path.relpath(report, root)}` · Finding IDs `SR{n}-F1`, `SR{n}-F2`, ...",
         f"- Previous run: `{os.path.relpath(prev, root)}`" if prev else "- Previous run: none",
-        "- Decisions log: `.specs/STATE.md`" if os.path.isfile(os.path.join(root, ".specs", "STATE.md")) else "- Decisions log: none",
+        *decisions,
         f"- Repo Standard sources: {', '.join('`' + s + '`' for s in standards) or 'none found'}",
         f"- Lint/format configs: {', '.join('`' + s + '`' for s in lint) or 'none found'}",
         f"- Graph: {graph}",

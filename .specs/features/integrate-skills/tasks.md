@@ -302,8 +302,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: REV-01, REV-02
 
 **Done when**:
-- [ ] the five Scenario tests pass with the real `graphify`
-- [ ] Gate check passes: quick, scenarios, build, plan
+- [x] the five Scenario tests pass with the real `graphify`
+- [x] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
 **Scenarios**: REV-01.S1, REV-01.S2, REV-02.S1, REV-02.S2, REV-02.S3
