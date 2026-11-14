@@ -18,6 +18,8 @@ What it checks (heuristic markdown inspection, not a full parser):
            "Rationale" cell, or an Assumptions row has an empty "Chosen default" or
            "Rationale" cell (tables are found by header name; a body of `none` is accepted)
   ERROR  - a Requirement Traceability row has a malformed ID, or a criterion ID is missing from it
+  WARN   - a legacy spec (no `**Grilling Record**:` line) has no `Decisions & Assumptions`
+           section; its old `Assumptions & Open Questions` table is checked instead
   WARN   - no `**Scope**:` line (Medium+ rules applied)
   WARN   - an AC has SHALL but no recognizable EARS lead keyword
   WARN   - template placeholder rows are still present (spec not filled in)
@@ -40,14 +42,17 @@ import os
 import re
 import sys
 
-from scenarios_lib import find_tables, parse_spec, spec_scope
+from scenarios_lib import find_tables, parse_spec, spec_is_native, spec_scope
+
+DECISIONS = "Decisions & Assumptions"
+LEGACY_ASSUMPTIONS = "Assumptions & Open Questions"
 
 REQUIRED_SECTIONS = [
     "Problem Statement",
     "Existing Capabilities",
     "Standards",
     "Out of Scope",
-    "Decisions & Assumptions",
+    DECISIONS,
     "User Stories",
     "Requirement Traceability",
 ]
@@ -55,7 +60,7 @@ REQUIRED_SECTIONS_SMALL = [
     "Problem Statement",
     "Existing Capabilities",
     "Standards",
-    "Decisions & Assumptions",
+    DECISIONS,
     "Acceptance Criteria",
     "Steps",
 ]
@@ -169,11 +174,15 @@ def check(spec_path):
     if scope is None:
         warnings.append("no '**Scope**: Small|Medium|Large|Complex' line - Medium+ rules applied")
     small = scope == "Small"
+    native = spec_is_native(text)
 
     # 1. Required sections.
     for name in (REQUIRED_SECTIONS_SMALL if small else REQUIRED_SECTIONS):
         if section_bounds(lines, name) is None:
-            errors.append(f"missing required section: ## {name}")
+            if name == DECISIONS and not native:
+                warnings.append(f"legacy spec (no **Grilling Record** line): missing section ## {name}")
+            else:
+                errors.append(f"missing required section: ## {name}")
     for name in ("Existing Capabilities", "Standards"):
         b = section_bounds(lines, name)
         if b:
@@ -195,14 +204,20 @@ def check(spec_path):
         warnings.append("no acceptance criteria with IDs parsed - is the spec filled in?")
 
     # 3. Decisions & Assumptions: table cells filled. Tables are found by header name.
-    b = section_bounds(lines, "Decisions & Assumptions")
+    #    A legacy spec keeps its old section, checked at the scopes that always had it.
+    title = DECISIONS
+    b = section_bounds(lines, DECISIONS)
+    if b is None and not native and not small:
+        title = LEGACY_ASSUMPTIONS
+        b = section_bounds(lines, LEGACY_ASSUMPTIONS)
     body = [lines[i].strip() for i in range(*b) if lines[i].strip()] if b else []
     if b and [ln.lower().rstrip(".") for ln in body] != ["none"]:
         section = lines[b[0]:b[1]]
         template_seen = False
         for kind, headers, required in (
             ("decision", ("ID", "Choice"), ("Choice", "Rationale")),
-            ("assumption", ("Assumption", "Chosen default"), ("Chosen default", "Rationale")),
+            ("assumption", ("Assumption", "Chosen default") if title == DECISIONS else ("Chosen default",),
+             ("Chosen default", "Rationale")),
         ):
             for row in (r for t in find_tables(section, *headers) for r in t):
                 first = row[""]
@@ -214,13 +229,13 @@ def check(spec_path):
                     if not cell or PLACEHOLDER_RE.match(cell):
                         errors.append(f"{kind} '{first[:40]}' has empty '{name}'")
         if template_seen:
-            warnings.append("Decisions & Assumptions still contains template placeholder rows")
+            warnings.append(f"{title} still contains template placeholder rows")
         if not small:
             # open questions line
             oq = [lines[i] for i in range(*b) if "open questions" in lines[i].lower()]
             oq_clean = re.sub(r"[*_]", "", " ".join(oq)).lower()
             if not oq:
-                warnings.append("no 'Open questions:' line in Decisions & Assumptions")
+                warnings.append(f"no 'Open questions:' line in {title}")
             elif not re.search(r"open questions.*:\s*none", oq_clean):
                 warnings.append("open questions do not read as resolved ('Open questions: none')")
 

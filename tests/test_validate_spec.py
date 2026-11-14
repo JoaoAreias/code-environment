@@ -75,5 +75,20 @@ class DecisionsAndAssumptions(unittest.TestCase):
         self.assertIn("validate_spec: 1 error(s)", out)
 
 
+class LegacySpecs(unittest.TestCase):
+
+    def test_legacy_spec_only_warns(self):
+        """
+        Scenario: PLAN-01.S1 legacy spec only warns
+          Given a Large-scope spec.md with no Grilling Record line, an "Assumptions & Open Questions" section and every other required section
+          When validate_spec.py runs on it
+          Then it exits 0
+          And its output warns about "Decisions & Assumptions"
+        """
+        code, out = validate(self, "base", "spec-legacy")
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r"WARN .*Decisions & Assumptions")
+
+
 if __name__ == "__main__":
     unittest.main()

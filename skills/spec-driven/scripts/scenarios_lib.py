@@ -90,6 +90,11 @@ def spec_scope(text):
     return m.group(1).capitalize() if m else None
 
 
+def spec_is_native(text):
+    """A spec with a `**Grilling Record**:` line is native; without one it is legacy."""
+    return bool(re.search(r"^\*\*Grilling Record\*\*\s*:", text, re.MULTILINE))
+
+
 def parse_spec(text):
     """Parse ACs and Scenarios. Returns dict with acs, scenarios, problems.
 

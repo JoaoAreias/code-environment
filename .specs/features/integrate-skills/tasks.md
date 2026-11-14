@@ -239,8 +239,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: PLAN-01
 
 **Done when**:
-- [ ] the Scenario test passes
-- [ ] Gate check passes: quick, scenarios, build
+- [x] the Scenario test passes
+- [x] Gate check passes: quick, scenarios, build
 
 **Tests**: integration
 **Scenarios**: PLAN-01.S1
