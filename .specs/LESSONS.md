@@ -17,8 +17,8 @@ Seen once or not yet corroborated. Tracked, not trusted.
 ### L-001 - Name shared per-feature files under .specs so two branches cannot pick the same name silently
 - audience: author · signal: `spec_review_finding` · recurrence: 1 feature(s) · scope: `.specs` · harmful: 0
 - features: integrate-skills
-- evidence: .specs/features/integrate-skills/spec-review-1.md SR1-F3 (.specs)
-- last seen: 2026-11-14T14:16:40Z
+- evidence: .specs/features/integrate-skills/spec-review-1.md SR1-F3 (.specs) (+1 more)
+- last seen: 2026-11-14T17:26:43Z
 
 ### L-002 - Make every write to an external tracker resumable and never create the same item twice
 - audience: author · signal: `spec_review_finding` · recurrence: 1 feature(s) · scope: `trackers` · harmful: 0
@@ -35,14 +35,26 @@ Seen once or not yet corroborated. Tracked, not trusted.
 ### L-004 - Validators read markdown table cells by header name, never by position
 - audience: author · signal: `spec_review_finding` · recurrence: 1 feature(s) · scope: `scripts` · harmful: 0
 - features: integrate-skills
-- evidence: .specs/features/integrate-skills/spec-review-1.md SR1-F8 (scripts)
-- last seen: 2026-11-14T14:16:40Z
+- evidence: .specs/features/integrate-skills/spec-review-1.md SR1-F8 (scripts) (+1 more)
+- last seen: 2026-11-14T17:26:43Z
 
 ### L-005 - Do not ask for a graphify stub in tests; this repo requires the real graphify on purpose
 - audience: reviewer · signal: `review_rejection` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
 - features: integrate-skills
 - evidence: .specs/features/integrate-skills/spec-review-1.md SR1-F9 (tests)
 - last seen: 2026-11-14T14:16:40Z
+
+### L-006 - Delete from a shared directory only what this repo put there, never by name alone
+- audience: author · signal: `spec_review_finding` · recurrence: 1 feature(s) · scope: `install` · harmful: 0
+- features: integrate-skills
+- evidence: .specs/features/integrate-skills/spec-review-2.md SR2-F7 (install)
+- last seen: 2026-11-14T17:26:43Z
+
+### L-007 - Keep fixture specs as md files under tests/fixtures, never as text inside a test function
+- audience: author · signal: `spec_review_finding` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: integrate-skills
+- evidence: .specs/features/integrate-skills/spec-review-2.md SR2-F3 (tests)
+- last seen: 2026-11-14T17:26:43Z
 
 ## Quarantined (failed when applied - ignore)
 

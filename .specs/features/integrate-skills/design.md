@@ -39,7 +39,7 @@ Flow after the change:
 ```
 Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-review → Dispositions
    → ["publish tickets", optional] → Execution Approval → Execute (tdd loop per Task, test proofs only)
-   → Verifier (all Scenarios; inspect rows in validation.md) → /code-review (human)
+   → Verifier (all Scenarios, one row each in validation.md's Scenario-Anchored table) → /code-review (human)
 ```
 
 ---
@@ -60,8 +60,8 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 | Ticket checks in `validate_tasks.py` | read `validate_tasks.py` | `parse_tasks`, `check` | Extend | a second pass over a `## Tickets` section; legacy plans warn |
 | Plan-file gate, snapshot and foreign plans in `prep_review.py` | read `prep_review.py:206-260` | `prep_spec`, plan list at `:212` | Extend | add paths, add two STOP checks, list records, accept a foreign plan path |
 | Section rename and cell check in `validate_spec.py` | read `validate_spec.py:44-60,196-225` | `REQUIRED_SECTIONS`, assumptions table check at `:203-210` | Extend | rename, require for native specs, find tables by header names, accept `none` |
-| Retired-skill removal in `install.sh` | `symbols --match retire,retired,install` → none; read `install.sh:13,24-28` | `RETIRED_SKILLS` loop | Extend | longer list, fd warning |
-| `tests/` | `find . -name 'test_*.py'` → none; `python3 -m pytest` → not installed | none | New | stdlib `unittest`, fixture repositories in temp dirs, real graphify (D-grill-in-spec-driven.38) |
+| Retired-skill removal in `install.sh` | `symbols --match retire,retired,install` → none; read `install.sh:13,24-28` | `RETIRED_SKILLS` loop | Extend | longer list, provenance check before deleting, fd warning |
+| `tests/` | `find . -name 'test_*.py'` → none; `python3 -m pytest` → not installed | none | New | stdlib `unittest`, fixture repositories in temp dirs built from `.md` files under `tests/fixtures/`, real graphify (D-grill-in-spec-driven.38) |
 
 ### Integration Points
 
@@ -94,18 +94,18 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 
 - **Purpose**: the read rule, discovery, legacy sources, plan kinds and Binds test, in one place (D-grill-in-spec-driven.41).
 - **Interfaces**: linked from `specify.md`, `design.md`, `tasks.md`, `implement.md`, `standards.md` §1, both agents, `tdd`, `diagnosing-bugs`, `improve-codebase-architecture`, `domain-modeling`.
-- **Contents**: the two fd commands; the "fd missing: stop and ask" rule; the `summary.md` row filter (`active` only; `draft` and `retired` skipped); the header fallback when `summary.md` is broken; legacy sources (`STATE.md ## Decisions`, root `docs/adr/`, per-context `docs/adr/` via `CONTEXT-MAP.md` or `fd -t d -p 'docs/adr$'`, legacy `context.md`); how to tell native, legacy and foreign plans apart (D-grill-in-spec-driven.43); "cite outside sources used in the record's Context".
+- **Contents**: the two fd commands; the "fd missing: stop and ask" rule; the `summary.md` row filter (`active` only; `draft` skipped); the header fallback when `summary.md` is broken; legacy sources (`STATE.md ## Decisions`, root `docs/adr/`, per-context `docs/adr/` via `CONTEXT-MAP.md` or `fd -t d -p 'docs/adr$'`, and the current feature's `context.md` whenever it exists); how to tell native, legacy and foreign plans apart (D-grill-in-spec-driven.43); "cite outside sources used in the record's Context".
 
 ### spec-driven phase references (changed)
 
-- `SKILL.md`: flow line, auto-sizing table (Tasks at every scope, Design at Medium+), `.specs` tree (`decisions/`, `reviews/`, no `context.md`), commands table (publish tickets; Discuss removed), Critical Rules (implementation only through spec-driven; Tickets published only on go-ahead; foreign plans never edited; `graphify-out/` never deleted).
+- `SKILL.md`: flow line, auto-sizing table (Tasks at every scope, Design at Medium+), `.specs` tree (`decisions/`, `reviews/<plan slug>/`, no new `context.md`), commands table (publish tickets; Discuss removed), Critical Rules (implementation only through spec-driven; Tickets published only on go-ahead; foreign plans never edited; `graphify-out/` never deleted).
 - `specify.md`: pre-question steps (lessons, `decisions.md` read rule, capability search, Standards); calls `grilling` + `domain-modeling`, with the sibling fallback; draft record created at the first answer and resumed if found; dimensions sweep as closing branches; spec template with `## Decisions & Assumptions` (`ID | Decision | Choice | Rationale | Decided by | Binds`), a `**Grilling Record**:` line, a `**Proof**:` line under each Scenario, Deferred Ideas in Out of Scope and optional `## References`; Small template gains Decisions & Assumptions; a foreign plan as input (D-grill-in-spec-driven.44).
 - `discuss.md`: deleted.
 - `design.md`: required at Medium+; reads via `decisions.md`; grill-style questions; `## Design` section in the record; Tech Decisions as links; changing another record's Decision rewrites it there.
 - `tasks.md`: never skipped; top-down Ticket slicing (D-grill-in-spec-driven.23) with the `## Tickets` markup (D-grill-in-spec-driven.39); proof type on each Task; links `tickets.md`.
 - `tickets.md` (new): slicing rules (about one day, vertical, expand–contract for wide refactors), fix Tickets (D-grill-in-spec-driven.45), and publishing (D-grill-in-spec-driven.25).
 - `implement.md`: no safety valve; per-Task `tdd` loop; step 5.3 passes only `test` IDs to `validate_scenarios.py --only`; deferred ideas surfaced, Out of Scope row on go-ahead; Verifier gaps become fix tasks in a fix Ticket; after the Verifier passes, say `/code-review` is available.
-- `validate.md`: §2 runs `validate_scenarios.py` on all Scenarios and, before that, writes one `validation.md` row per `inspect` Scenario (ID, PASS or FAIL, `file:line`, reason); gaps become fix tasks in a fix Ticket.
+- `validate.md`: §2 keeps one results table, the Scenario-Anchored table, with exactly one row per Scenario of either proof type. For an `inspect` Scenario the evidence cell holds the `file:line` read and a one-sentence reason in place of a test assertion. The Verifier fills the table, then runs `validate_scenarios.py` on all Scenarios; the report template changes to match; gaps become fix tasks in a fix Ticket.
 - `memory.md`: `STATE.md` keeps `## Handoff`; the Decisions section moves to a pointer at `decisions.md`.
 - `standards.md` §1: active project Decisions are Repo Standards; discovery replaces the hand-listed source search. §4: `graphify-out/` is a cache that is never deleted.
 - `review.md`: after Dispositions, rewrite changed Decisions in place and add review Decisions under `## Review` (D-grill-in-spec-driven.15); accepted Change Review Findings become fix tasks in one fix Ticket; publish-tickets gate.
@@ -114,14 +114,14 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 ### Scripts (changed)
 
 - `scenarios_lib.py`: `parse_spec` reads an optional `**Proof**: test|inspect` line after each Scenario's closing fence (default `test`).
-- `validate_scenarios.py`: for an `inspect` Scenario, the proof is a row in `.specs/features/<f>/validation.md` whose first cell is the Scenario ID and second cell is `PASS`; a missing row or `FAIL` is an error naming the Scenario; tests claiming an `inspect` Scenario are still allowed.
+- `validate_scenarios.py`: for an `inspect` Scenario, the proof is its row in the Scenario-Anchored table of `.specs/features/<f>/validation.md`. The script finds that table by its `Scenario` and `Result` headers, never by position, and reads the `Result` cell after stripping a leading `✅` or `❌` mark. `PASS` proves the Scenario; a missing table, a missing row, any other Result (such as `GAP`) or two rows with the same ID is an error naming the Scenario. Tests claiming an `inspect` Scenario are still allowed.
 - `validate_spec.py`: `REQUIRED_SECTIONS` and `REQUIRED_SECTIONS_SMALL` both contain `Decisions & Assumptions`; the section accepts a body of `none`; the cell check finds the Decisions table by its `ID` and `Choice` headers and the Assumptions table by its `Assumption` and `Chosen default` headers, and names the row's first cell on error. A spec with no `**Grilling Record**:` line is legacy: the new section rule becomes a warning.
 - `validate_tasks.py`: a Ticket pass over `## Tickets`: every task in exactly one Ticket; Blocked by points only to earlier Tickets; fix Tickets are ordinary Tickets. `Tickets` joins `REQUIRED_SECTIONS`. When the sibling `spec.md` has no `**Grilling Record**:` line, the Ticket rules become warnings.
-- `prep_review.py`: plan list adds `.specs/decisions/`, `CONTEXT-MAP.md` and every path whose basename is `CONTEXT.md`; STOP when `tasks.md` is missing, or `design.md` at Medium+; the Review context lists records whose `summary.md` row names the feature; native features drop `context.md` and the `STATE.md` decisions line, legacy features list `context.md` as a legacy decision source; a target that is a file path outside `.specs/features/` is a foreign plan: no validators, a note saying why, and a report path `.specs/reviews/<basename>-review-<n>.md`.
+- `prep_review.py`: plan list adds `.specs/decisions/`, `CONTEXT-MAP.md` and every path whose basename is `CONTEXT.md`; STOP when `tasks.md` is missing, or `design.md` at Medium+; the Review context lists records whose `summary.md` row names the feature; a feature's `context.md` is listed as a legacy decision source whenever the file exists, whatever the plan kind; native features drop the `STATE.md` decisions line; a target that is a file or folder path outside `.specs/features/` is a foreign plan: no validators, a note saying why, and a report path `.specs/reviews/<slug>/spec-review-<n>.md`, where `<slug>` is the repo-relative path with its extension and leading dots removed and every run of other characters turned into one hyphen (`.kiro/specs/payments/design.md` gives `kiro-specs-payments-design`). `next_run` runs inside that folder, so each foreign plan has its own run numbers and previous run. A folder target is one plan: every `*.md` file in it, recursively, is listed as a plan file.
 
 ### Agents (changed)
 
-- `agents/spec-reviewer.md`: reads via `decisions.md`; adds the D-grill-in-spec-driven.20 checks; for a foreign plan, judges content only and writes the report under `.specs/reviews/`.
+- `agents/spec-reviewer.md`: reads via `decisions.md`; adds the D-grill-in-spec-driven.20 checks; for a foreign plan (one file, or every file of a folder target), judges content only and writes the report to the path the Review context names under `.specs/reviews/<slug>/`.
 - `agents/change-reviewer.md`: reads via `decisions.md`; adds the active-Decision and departure checks.
 
 ### Other skills (changed or removed)
@@ -132,11 +132,11 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 - `improve-codebase-architecture` (+ `HTML-REPORT.md`, `agents/openai.yaml`): ADR conflicts become Decision conflicts; rejections are recorded in its Grilling Record.
 - `grill-with-docs` (+ `agents/openai.yaml`): description says it writes a Grilling Record and `CONTEXT.md`; for features, use spec-driven.
 - `setup-spec-driven`: renamed from `setup-matt-pocock-skills`; Section B (triage labels) and `triage-labels.md` removed; `domain.md` points at `.specs/decisions/`.
-- Deleted: `ask-matt`, `implement`, `to-spec`, `to-tickets`, `triage`, `wayfinder`, `skills/engineering-README.md`.
+- Deleted: `ask-matt`, `implement`, `to-spec`, `to-tickets`, `triage`, `wayfinder`, `wizard`, `skills/engineering-README.md`.
 
 ### Install and docs (changed)
 
-- `install.sh`: `RETIRED_SKILLS` gains the seven names; warns when `fd` is missing; the step list stays otherwise.
+- `install.sh`: `RETIRED_SKILLS` gains the eight names (the seven deleted skills and `setup-matt-pocock-skills`), each paired with a short phrase from the `SKILL.md` this repository shipped. The loop deletes an installed folder only when it is not a symlink and its `SKILL.md` contains that phrase; otherwise it prints `skipped <name>: not installed by this repo` and leaves it. `tlc-spec-driven` keeps its entry with its own phrase. Warns when `fd` is missing; the step list stays otherwise.
 - `README.md`: skill table and flow rewritten; attribution reads "based on mattpocock/skills"; `engineering-README.md` mention removed.
 
 ---
@@ -147,7 +147,7 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 
 ```markdown
 # <slug> · <title>
-- **Date** · **Started from** · **Specs** · **Binds** · **Areas** · **Status** (draft | active | retired)
+- **Date** · **Started from** · **Specs** · **Binds** · **Areas** · **Status** (draft | active)
 ## Context            (problem, forces, code facts with file:line, constraints, outside sources used)
 ## Session path       (### Qn · question; Options; Recommended; Answer -> D-<slug>.k)
                       (a review grill appends its own subsection; the Session path is never rewritten)
@@ -162,7 +162,7 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 ### `summary.md`
 
 ```markdown
-| File | Date | Summary | Status | Binds | Areas | Specs |     (finished records only; sorted by Date, then File; Status active | retired)
+| File | Date | Summary | Status | Binds | Areas | Specs |     (finished records only, so Status reads active; sorted by Date, then File)
 ## Legacy decision sources   (one line per docs/adr/ or STATE.md Decisions that exists)
 ```
 
@@ -176,12 +176,26 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
    **Proof**: inspect        (or test; absent means test)
 ~~~
 
-### `validation.md` inspect row
+### `validation.md` Scenario-Anchored table (the one results table)
 
 ```markdown
-| Scenario | Result | Evidence | Reason |
-| DEMO-01.S1 | PASS | skills/demo/SKILL.md:12 | the rule is stated as the Then step requires |
+| Scenario | Spec-defined outcome (Then) | `file:line` + assertion expression | Result |
+| CSV-01.S1 | the file has 3 rows | `tests/test_csv.py:42` - `assertEqual(len(rows), 3)` | ✅ PASS |      (test)
+| DEMO-01.S1 | the rule is stated | `skills/demo/SKILL.md:12` - step 3 states the rule as the Then step requires | ✅ PASS |      (inspect)
 ```
+
+One row per Scenario. `validate_scenarios.py` reads the `Scenario` and `Result` columns by header name.
+
+### Test fixtures
+
+```
+tests/
+  fixtures.py                 helper: builds a temp git repo and copies fixture files into it
+  fixtures/<case>/*.md        sample spec.md, tasks.md, validation.md, foreign plans, SKILL.md copies
+  test_*.py                   one test per Scenario; no sample Scenario text inside any test function
+```
+
+`scenarios_lib.py` scans only code files under `tests/`, so the `.md` fixtures never register as Scenario claims.
 
 ### `tasks.md` Tickets
 
@@ -218,8 +232,13 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 | slug already taken | agent picks another slug | none |
 | session ends mid-grill | the `draft` record holds every answer so far; the next Specify resumes it | none |
 | no `summary.md`, legacy `docs/adr/` present (root or per context) | read rule still checks legacy sources | none |
-| legacy plan | validators warn on the new rules; `context.md` read as legacy | warnings only |
-| foreign plan given to `/spec-review` | validators skipped with a note; report under `.specs/reviews/`; plan untouched | none |
+| legacy plan | validators warn on the new rules | warnings only |
+| feature folder has a `context.md` (any plan kind) | read rule and Review context list it as a legacy decision source | none |
+| foreign plan given to `/spec-review` | validators skipped with a note; report under `.specs/reviews/<slug>/`; plan untouched | none |
+| foreign target is a folder | every markdown file in it is one plan; slug from the folder path | none |
+| foreign target path does not exist | `prep_review.py` prints `STOP: ...`, exit 1 | `/spec-review` shows the STOP verbatim |
+| retired skill folder is a symlink or its `SKILL.md` lacks this repo's phrase | `install.sh` prints `skipped <name>: not installed by this repo` and leaves it | warning line in install output |
+| `validation.md` has two rows for one Scenario, or a Result other than PASS | `validate_scenarios.py` reports the Scenario as an error | Verifier fixes the report or routes the gap to a fix task |
 
 ---
 
@@ -253,5 +272,6 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 | Rewrite in place | [D-grill-in-spec-driven.15](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven15--changed-decisions-are-rewritten-in-place) |
 | Review snapshot paths | [D-grill-in-spec-driven.33](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven33--review-snapshot-covers-decisions-and-every-glossary) |
 | Validator changes | [D-grill-in-spec-driven.34](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven34--validator-changes) |
+| Installer provenance check | [D-grill-in-spec-driven.35](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven35--installer-changes) |
 
-Agent-decided details in this design (not separate Decisions): the `**Proof**:` line format and its default `test`; the `validation.md` inspect row columns; the foreign-plan report path `.specs/reviews/<basename>-review-<n>.md`; legacy detection in `validate_tasks.py` through the sibling `spec.md`.
+Agent-decided details in this design (not separate Decisions): the `**Proof**:` line format and its default `test`; the exact slug rule for a foreign plan's report folder; legacy detection in `validate_tasks.py` through the sibling `spec.md`; the `name` plus phrase pairing inside `RETIRED_SKILLS`; a missing foreign target stopping with `STOP`.

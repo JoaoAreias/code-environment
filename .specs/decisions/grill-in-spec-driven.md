@@ -6,7 +6,7 @@
 - **Binds**: project
 - **Areas**: `skills/`, `agents/`, `install.sh`, `render-adapters.js`, `README.md`, `CONTEXT.md`, `.specs/`
 - **Status**: active
-- **Note**: written by hand to the rules this session decided, before any skill implements them. It is also the first test of the Grilling Record template. Spec Review SR1 (2026-11-14) changed several Decisions; they were rewritten in place (D-grill-in-spec-driven.15) and carry a `Changed` line. The file was first named `0001-integrate-grill-into-spec-driven.md` with IDs `D-0001.k`.
+- **Note**: written by hand to the rules this session decided, before any skill implements them. It is also the first test of the Grilling Record template. Spec Reviews SR1 and SR2 (2026-11-14) changed several Decisions; they were rewritten in place (D-grill-in-spec-driven.15) and carry a `Changed` line. The file was first named `0001-integrate-grill-into-spec-driven.md` with IDs `D-0001.k`.
 
 ## Context
 
@@ -220,6 +220,17 @@ The user ran `/spec-review integrate-skills` (report `.specs/features/integrate-
 - **SR1-F10** (`prototype` and the `ready-for-agent` label leave routes outside spec-driven). The user asked for a clearer statement. Recommended: `prototype` hands its verdict to Specify, and published Tickets drop the label. **Answer**: accept. → D-grill-in-spec-driven.25, D-grill-in-spec-driven.26
 - **SR1-F11** (one ID bundles nine Decisions). Recommended splitting. **Answer**: the user replaced supersession altogether: a changed Decision is rewritten in place and git keeps the history. Follow-up: (a) a rewritten Decision gets a `Changed` line naming when and why, (b) no marker. Recommended (a). **Answer**: (a). The split into nine Decisions stood. → D-grill-in-spec-driven.15, D-grill-in-spec-driven.29 to D-grill-in-spec-driven.37
 
+### Spec Review SR2 grill (2026-11-14)
+The user ran `/spec-review integrate-skills` again on the reworked plan (report `.specs/features/integrate-skills/spec-review-2.md`, 7 Findings) and asked to be grilled on each one.
+
+- **SR2-F1** (foreign-plan review reports named by file basename collide). Options: (a) one folder per foreign plan named from its repo-relative path, with folder targets reviewed as one plan, (b) flat files with the path slug in the name. Recommended (a). **Answer**: (a). → D-grill-in-spec-driven.43
+- **SR2-F2** (the `inspect` row and the Verifier's existing table can disagree). Options: (a) one table, the existing Scenario-Anchored one, read by header name, (b) a separate `## Inspect proofs` section. Recommended (a). **Answer**: (a). → D-grill-in-spec-driven.42
+- **SR2-F3** (fixture specs inside test functions register as Scenario claims). Recommended fixtures as `.md` files under `tests/fixtures/`; alternative was changing the checker. **Answer**: accept. → D-grill-in-spec-driven.38
+- **SR2-F4** (a `retired` record status the user never chose). The agent had added it while rewriting D-grill-in-spec-driven.8 and wrongly marked it as the user's. Options: (a) drop it, (b) keep it with a user-only rule. Recommended (a). **Answer**: (a). → D-grill-in-spec-driven.8, D-grill-in-spec-driven.17
+- **SR2-F5** (two definitions of a legacy plan). Recommended two rules: `context.md` is read whenever it exists, and a feature named in a `summary.md` Specs cell counts as native even without the `**Grilling Record**:` line. **Answer**: only the first rule. → D-grill-in-spec-driven.17, D-grill-in-spec-driven.33, D-grill-in-spec-driven.43
+- **SR2-F6** (`wizard` commits scripts outside spec-driven). Options: (a) a named exception to the Goal, (b) route committed wizards through a Small Specify. Recommended (a). The user asked what `wizard` was; they had never used it and did not know where it came from. The agent reported it was vendored from mattpocock/skills in commit `5544263` and nothing depends on it, added (c) retire it, and changed its recommendation to (c). **Answer**: (c). → D-grill-in-spec-driven.21, D-grill-in-spec-driven.35
+- **SR2-F7** (`install.sh` deletes retired skills by name alone in a shared folder). Options: (a) delete only folders whose `SKILL.md` matches what this repo shipped and that are not symlinks, (b) ask before each deletion, (c) leave it. Recommended (a). **Answer**: (a). → D-grill-in-spec-driven.35
+
 ## Decisions
 
 ### D-grill-in-spec-driven.1 · Specify is the grill
@@ -265,11 +276,11 @@ The user ran `/spec-review integrate-skills` (report `.specs/features/integrate-
 - **Binds**: project · **Decided by**: user
 - **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F3): numbered `NNNN-slug.md` names and `D-NNNN.k` IDs replaced by slug names and `D-<slug>.k` IDs.
 ### D-grill-in-spec-driven.8 · `summary.md` is a table of all decision files
-- **Choice**: one row per finished Grilling Record with columns `File | Date | Summary | Status | Binds | Areas | Specs`. Rows are sorted by Date, then File. Summary is one or two sentences. Status is `active` or `retired` (a whole record no longer applies; its Decisions were rewritten elsewhere). Binds is `project` when any Decision in the file binds the project. Areas lists the code paths the Decisions govern, `*` for repo-wide. `summary.md` is an index: each record's header is the source of truth.
+- **Choice**: one row per finished Grilling Record with columns `File | Date | Summary | Status | Binds | Areas | Specs`. Rows are sorted by Date, then File. Summary is one or two sentences. A record's Status is `draft` while its grill runs and `active` once it is finished; only finished records have a row, so the Status cell reads `active`. A Decision that stops applying is rewritten to say so (D-grill-in-spec-driven.15); its record stays `active`. Binds is `project` when any Decision in the file binds the project. Areas lists the code paths the Decisions govern, `*` for repo-wide. `summary.md` is an index: each record's header is the source of truth.
 - **Reason**: a cheap first read in big repos; consumers filter by Binds and Areas before opening files. Sorting by date keeps concurrent additions apart.
 - **Trade-off**: one more file the agent must keep in sync by hand.
 - **Binds**: project · **Decided by**: user
-- **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F3, SR1-F11): Date column added, rows sorted, supersession statuses replaced by `active` or `retired`.
+- **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F3, SR1-F11; spec-review-2 SR2-F4): Date column added, rows sorted, supersession statuses removed; the `retired` status the agent had added was dropped, leaving `draft` and `active`.
 ### D-grill-in-spec-driven.9 · The file is a Grilling Record
 - **Choice**: the glossary term is **Grilling Record**. _Avoid_: ADR, decision record, session notes.
 - **Reason**: names what the file is and promises nothing about team agreement.
@@ -321,11 +332,11 @@ The user ran `/spec-review integrate-skills` (report `.specs/features/integrate-
 - **Binds**: project · **Decided by**: user
 - **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F11): cross-record supersession replaced by in-place rewriting.
 ### D-grill-in-spec-driven.17 · One read rule for every consumer
-- **Choice**: every consumer of Decisions (Specify, Design, Tasks, Execute, the Verifier, both reviewers, `tdd`, `diagnosing-bugs`, `improve-codebase-architecture`, domain-modeling) runs discovery (D-grill-in-spec-driven.18), then reads `summary.md` if present and opens the `active` records that either bind the project with Areas overlapping the paths being touched (or Areas `*`) or name the current feature in Specs. `draft` and `retired` records are skipped. When a `summary.md` row cannot be parsed, names a missing file, or a record has no row, the consumer warns, names the problem, lists `.specs/decisions/*.md` and decides from each record's header instead. Legacy sources are checked when present, with or without `summary.md`: `STATE.md ## Decisions`; the root `docs/adr/`; each context's `docs/adr/` listed in `CONTEXT-MAP.md`, or, without a map, every directory found by `fd -t d -p 'docs/adr$'` with the discovery excludes; and the `context.md` of a legacy spec-driven feature (D-grill-in-spec-driven.43). Active project-binding Decisions count as Repo Standards.
+- **Choice**: every consumer of Decisions (Specify, Design, Tasks, Execute, the Verifier, both reviewers, `tdd`, `diagnosing-bugs`, `improve-codebase-architecture`, domain-modeling) runs discovery (D-grill-in-spec-driven.18), then reads `summary.md` if present and opens the `active` records that either bind the project with Areas overlapping the paths being touched (or Areas `*`) or name the current feature in Specs. `draft` records are skipped. When a `summary.md` row cannot be parsed, names a missing file, or a record has no row, the consumer warns, names the problem, lists `.specs/decisions/*.md` and decides from each record's header instead. Legacy sources are checked when present, with or without `summary.md`: `STATE.md ## Decisions`; the root `docs/adr/`; each context's `docs/adr/` listed in `CONTEXT-MAP.md`, or, without a map, every directory found by `fd -t d -p 'docs/adr$'` with the discovery excludes; and the current feature's `context.md` whenever that file exists, whatever the plan kind. Active project-binding Decisions count as Repo Standards.
 - **Reason**: cheap reads in big repos, nothing silently ignored, collaborators' material on other flows is found, and a bad merge of `summary.md` does not block anyone.
 - **Trade-off**: every consumer pays a small read cost on every run.
 - **Binds**: project · **Decided by**: user
-- **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F2, SR1-F5, SR1-F7): drafts skipped, malformed-index fallback, per-context `docs/adr/` and legacy `context.md` added.
+- **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F2, SR1-F5, SR1-F7; spec-review-2 SR2-F4, SR2-F5): drafts skipped, malformed-index fallback, per-context `docs/adr/` added; `retired` removed; `context.md` read whenever it exists.
 ### D-grill-in-spec-driven.18 · Discovery is a general fd listing
 - **Choice**: two commands, read by the agent, which judges relevance and drills deeper where something looks like planning or decision material from another flow:
   ```sh
@@ -350,11 +361,11 @@ The user ran `/spec-review integrate-skills` (report `.specs/features/integrate-
 - **Binds**: project · **Decided by**: user
 - **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F2, SR1-F11): legacy `context.md` moved into the read rule, "without an amendment" became "not rewritten", bundled choices added to Communication.
 ### D-grill-in-spec-driven.21 · Retirements and the review distinction
-- **Choice**: retire `ask-matt`, `implement`, `to-spec`, `to-tickets`, `triage` and `wayfinder`; delete `skills/engineering-README.md`; drop the "matt-pocock" naming. Implementation happens only through spec-driven. spec-driven absorbs tickets; the useful parts of `to-tickets` (vertical slices, expand–contract for wide refactors, per-tracker publishing shapes) move into a spec-driven reference. The Verifier stays model-triggered and automatic; `/code-review` stays human-triggered; nothing model-driven runs `/code-review`. The README keeps a "based on mattpocock/skills" attribution, as MIT requires.
-- **Reason**: the skills have diverged into a different workflow; one implementation path keeps every change specified, reviewed and verified.
-- **Trade-off**: no lightweight ticket-only or triage flow remains.
+- **Choice**: retire `ask-matt`, `implement`, `to-spec`, `to-tickets`, `triage`, `wayfinder` and `wizard`; delete `skills/engineering-README.md`; drop the "matt-pocock" naming. Implementation happens only through spec-driven, with no exception. spec-driven absorbs tickets; the useful parts of `to-tickets` (vertical slices, expand–contract for wide refactors, per-tracker publishing shapes) move into a spec-driven reference. The Verifier stays model-triggered and automatic; `/code-review` stays human-triggered; nothing model-driven runs `/code-review`. The README keeps a "based on mattpocock/skills" attribution, as MIT requires.
+- **Reason**: the skills have diverged into a different workflow; one implementation path keeps every change specified, reviewed and verified. `wizard` committed scripts to the repo outside that path and the user had never used it.
+- **Trade-off**: no lightweight ticket-only or triage flow remains, and no generator for manual-step scripts.
 - **Binds**: project · **Decided by**: user (README and engineering-README handling: agent, not objected to)
-
+- **Changed**: 2026-11-14 by integrate-skills (spec-review-2 SR2-F6): `wizard` added to the retired skills.
 ### D-grill-in-spec-driven.22 · `setup-spec-driven`
 - **Choice**: `setup-matt-pocock-skills` becomes `setup-spec-driven`. It configures the issue tracker spec-driven publishes Tickets to and the domain docs layout. The triage-labels section goes; the domain docs section points at `.specs/decisions/`. It still writes `docs/agents/*.md` and the `## Agent skills` block in `CLAUDE.md` or `AGENTS.md`.
 - **Reason**: names the workflow it configures; opencode and omp agents read `AGENTS.md`.
@@ -426,12 +437,11 @@ The user ran `/spec-review integrate-skills` (report `.specs/features/integrate-
 - **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F11): split out of a bundle.
 
 ### D-grill-in-spec-driven.33 · Review snapshot covers decisions and every glossary
-- **Choice**: `prep_review.py`'s pre-review snapshot commit also covers `.specs/decisions/`, `CONTEXT-MAP.md` and every file named `CONTEXT.md`. A native feature's snapshot no longer includes `context.md`; a legacy feature's `context.md` is still listed. The Review context names the feature's Grilling Record.
-- **Reason**: a grill edits those files, and a review must not stop on its own planning output.
+- **Choice**: `prep_review.py`'s pre-review snapshot commit also covers `.specs/decisions/`, `CONTEXT-MAP.md` and every file named `CONTEXT.md`. A feature's `context.md` is listed in the Review context whenever it exists, whatever the plan kind. The Review context names the feature's Grilling Record.
+- **Reason**: a grill edits those files, and a review must not stop on its own planning output; a `context.md` holds locked decisions the reviewer must see.
 - **Trade-off**: a stray glossary edit elsewhere gets committed with the plan.
-- **Binds**: project · **Decided by**: agent (listed at the shared-understanding check, not objected to)
-- **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F2, SR1-F7, SR1-F11): split out of a bundle; every `CONTEXT.md` and `CONTEXT-MAP.md` added, legacy `context.md` kept.
-
+- **Binds**: project · **Decided by**: agent (listed at the shared-understanding check, not objected to); `context.md` rule: user
+- **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F2, SR1-F7, SR1-F11; spec-review-2 SR2-F5): split out of a bundle; every `CONTEXT.md` and `CONTEXT-MAP.md` added; `context.md` listed whenever it exists.
 ### D-grill-in-spec-driven.34 · Validator changes
 - **Choice**: `validate_spec.py` renames "Assumptions & Open Questions" to "Decisions & Assumptions" and requires it at every scope (`none` allowed). It finds the Decisions and Assumptions tables by their header names and checks Choice and Rationale, and Chosen default and Rationale, naming the row on error. `validate_tasks.py` gains Ticket checks: every Task in exactly one Ticket, Blocked-by edges pointing backward. For a legacy spec-driven plan (D-grill-in-spec-driven.43) the new heading and Ticket checks are warnings, not errors. Foreign plans are not validated.
 - **Reason**: the gates follow the new artifacts without breaking older plans.
@@ -440,12 +450,11 @@ The user ran `/spec-review integrate-skills` (report `.specs/features/integrate-
 - **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F2, SR1-F8, SR1-F11): split out of a bundle; header-name cell check and legacy warnings added.
 
 ### D-grill-in-spec-driven.35 · Installer changes
-- **Choice**: `install.sh` adds the retired skills and `setup-matt-pocock-skills` to `RETIRED_SKILLS`, installs `grilling`, and warns when `fd` is missing.
-- **Reason**: installed copies of retired skills would otherwise keep offering old routes.
-- **Trade-off**: the installer deletes directories from the user's skill folders.
-- **Binds**: project · **Decided by**: agent (listed at the shared-understanding check, not objected to)
-- **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F11): split out of a bundle.
-
+- **Choice**: `install.sh` adds the retired skills and `setup-matt-pocock-skills` to `RETIRED_SKILLS`, installs `grilling`, and warns when `fd` is missing. For each retired name it holds a short phrase from the `SKILL.md` this repo shipped. It deletes an installed folder only when that folder is not a symlink and its `SKILL.md` contains the phrase; otherwise it prints `skipped <name>: not installed by this repo` and leaves the folder alone.
+- **Reason**: installed copies of retired skills would otherwise keep offering old routes; the skills folder is shared with other sources, and names such as `implement` and `triage` are generic.
+- **Trade-off**: a retired copy the user edited heavily may no longer match and is left in place with a warning.
+- **Binds**: project · **Decided by**: agent (listed at the shared-understanding check, not objected to); provenance check: user
+- **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F11; spec-review-2 SR2-F7): split out of a bundle; deletion now requires a matching `SKILL.md` and skips symlinks.
 ### D-grill-in-spec-driven.36 · `STATE.md` keeps only the handoff
 - **Choice**: `STATE.md` keeps only `## Handoff`; old `AD-NNN` entries are read as legacy.
 - **Reason**: Decisions now live in Grilling Records.
@@ -462,11 +471,11 @@ The user ran `/spec-review integrate-skills` (report `.specs/features/integrate-
 ## Design
 
 ### D-grill-in-spec-driven.38 · Test strategy for a prompt-and-script repository
-- **Choice**: deterministic behavior (the validators, `prep_review.py`, `install.sh`) is proven by stdlib `unittest` tests under `tests/`, one test per Scenario with the Scenario ID and Given/When/Then text in the docstring, each running against a throwaway fixture repository in a temporary directory. The tests use the real `graphify`; no stub. Behavior a unit test cannot prove (skill prose, the installer's missing-`fd` warning) uses proof type `inspect` (D-grill-in-spec-driven.42) and is checked by the Verifier.
-- **Reason**: the repository has no test suite and no Repo Standard for one; `pytest` is not installed, `unittest` is. A text-matching test over skill prose would be an Implementation-Coupled Test. graphify is a required tool, so the tests require it too.
+- **Choice**: deterministic behavior (the validators, `prep_review.py`, `install.sh`) is proven by stdlib `unittest` tests under `tests/`, one test per Scenario with the Scenario ID and Given/When/Then text in the docstring, each running against a throwaway fixture repository in a temporary directory. Fixture specs, tasks and validation files live as `.md` files under `tests/fixtures/` and are copied in by a helper; no test function contains sample Scenario text. The tests use the real `graphify`; no stub. Behavior a unit test cannot prove (skill prose, the installer's missing-`fd` warning) uses proof type `inspect` (D-grill-in-spec-driven.42) and is checked by the Verifier.
+- **Reason**: the repository has no test suite and no Repo Standard for one; `pytest` is not installed, `unittest` is. A text-matching test over skill prose would be an Implementation-Coupled Test. graphify is a required tool, so the tests require it too. The Scenario checker reads every line of a test function, so inline fixture text would count as extra claims.
 - **Trade-off**: `inspect` Scenarios are not re-checked automatically on later Changes; the tests fail on a machine without graphify.
 - **Binds**: feature · **Decided by**: agent; graphify and the `fd` check: user
-- **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F1, SR1-F9): manual UAT replaced by `inspect`; real graphify required; the missing-`fd` check moved to `inspect`.
+- **Changed**: 2026-11-14 by integrate-skills (spec-review-1 SR1-F1, SR1-F9; spec-review-2 SR2-F3): manual UAT replaced by `inspect`; real graphify required; the missing-`fd` check moved to `inspect`; fixtures moved to `tests/fixtures/`.
 ### D-grill-in-spec-driven.39 · Ticket markup in `tasks.md`
 - **Choice**: a `## Tickets` section with one `### K<n>: <title>` block per Ticket, carrying `**Delivers**`, `**Covers**`, `**Blocked by**` and `**Tasks**` fields. Ticket headings use `K` so they never match the `T<n>` task pattern. Each Ticket is one Execution Plan phase.
 - **Reason**: keeps the existing task parser untouched and makes the Ticket checks a separate pass.
@@ -490,17 +499,17 @@ The user ran `/spec-review integrate-skills` (report `.specs/features/integrate-
 Decisions added by Spec Review SR1 (`.specs/features/integrate-skills/spec-review-1.md`).
 
 ### D-grill-in-spec-driven.42 · Proof types: `test` and `inspect`
-- **Choice**: every Scenario has a proof type, `test` (default) or `inspect`, shown in the Test Coverage Matrix and on its Task. `inspect` is for changes a unit test cannot prove: markdown prompts, IaC, configuration. The per-Task gate passes only `test` Scenario IDs to `validate_scenarios.py --only`. The Verifier, the existing independent sub-agent, checks each `inspect` Scenario against the final files and writes a `validation.md` row: Scenario ID, PASS or FAIL, the `file:line` it read, and one sentence on why that text meets the Then steps; IaC may cite command output such as `terraform plan`. `validate_scenarios.py` accepts a PASS row as the proof of an `inspect` Scenario. Each Task claims only Scenarios its own change delivers.
-- **Reason**: prompt behavior cannot be unit tested, and the old gates failed every Scenario without a test.
+- **Choice**: every Scenario has a proof type, `test` (default) or `inspect`, shown in the Test Coverage Matrix and on its Task. `inspect` is for changes a unit test cannot prove: markdown prompts, IaC, configuration. The per-Task gate passes only `test` Scenario IDs to `validate_scenarios.py --only`. The Verifier, the existing independent sub-agent, checks each `inspect` Scenario against the final files. `validation.md` has one results table, the Verifier's existing Scenario-Anchored table, with exactly one row per Scenario of either proof type; for an `inspect` Scenario the evidence cell holds the `file:line` read and one sentence on why that text meets the Then steps (IaC may cite command output such as `terraform plan`). `validate_scenarios.py` finds that table by its `Scenario` and `Result` headers and accepts an `inspect` Scenario only when its row's Result is `PASS`, with or without the `✅` mark; a `❌ GAP` row, a missing row or a duplicate ID fails. Each Task claims only Scenarios its own change delivers.
+- **Reason**: prompt behavior cannot be unit tested, and the old gates failed every Scenario without a test. Two tables keyed by the same ID could disagree.
 - **Trade-off**: inspection proves the text says the right thing, not that a model obeys it.
-- **Binds**: project · **Decided by**: user (marker and independent checker), agent (row format)
-
-### D-grill-in-spec-driven.43 · Three kinds of plan
-- **Choice**: a **native** plan has a `**Grilling Record**:` line in `spec.md` and gets every check. A **legacy** spec-driven plan (`.specs/features/<f>/spec.md` without that line, or with a `context.md`) gets the new heading and Ticket checks as warnings, and its `context.md` is a legacy decision source. A **foreign** plan is anything else (a teammate's PRD, a design doc, another tool's spec folder, a ticket): it is never structurally validated and never edited, and its content is read as a requirement and decision source. Discovery notes foreign plan folders in the record's Context. `/spec-review <path>` on a foreign plan skips the validators, says why, and writes its report under `.specs/reviews/`.
-- **Reason**: the user works with teammates who do not follow this workflow and must be able to review and build on their plans.
-- **Trade-off**: three code paths in the validators and `prep_review.py`.
 - **Binds**: project · **Decided by**: user
-
+- **Changed**: 2026-11-14 by integrate-skills (spec-review-2 SR2-F2): the separate inspect row format was replaced by one row in the existing Scenario-Anchored table, read by header name.
+### D-grill-in-spec-driven.43 · Three kinds of plan
+- **Choice**: a **native** plan has a `**Grilling Record**:` line in `spec.md` and gets every check. A **legacy** spec-driven plan is a `.specs/features/<f>/spec.md` without that line; it gets the new heading and Ticket checks as warnings. That line alone decides between the two. A **foreign** plan is anything else (a teammate's PRD, a design doc, another tool's spec folder, a ticket): it is never structurally validated and never edited, and its content is read as a requirement and decision source. Discovery notes foreign plan folders in the record's Context. `/spec-review <path>` on a foreign plan skips the validators, says why, and writes its report to `.specs/reviews/<repo-relative path as a slug>/spec-review-<n>.md` (for example `.kiro/specs/payments/design.md` gives `kiro-specs-payments-design/`), so each plan has its own run numbers and previous run. A folder target is one plan: every markdown file in it is reviewed together and the slug comes from the folder path.
+- **Reason**: the user works with teammates who do not follow this workflow and must be able to review and build on their plans. Other tools reuse file names such as `design.md` in every feature folder.
+- **Trade-off**: three code paths in the validators and `prep_review.py`; a native spec that loses its `**Grilling Record**:` line is checked as legacy.
+- **Binds**: project · **Decided by**: user
+- **Changed**: 2026-11-14 by integrate-skills (spec-review-2 SR2-F1, SR2-F5): report folder per foreign plan and folder targets added; the "or with a `context.md`" clause removed.
 ### D-grill-in-spec-driven.44 · Building from a foreign plan
 - **Choice**: spec-driven never executes a foreign plan directly. Specify takes it as input, grills only the gaps, and writes a native `spec.md` that links to the source with its commit or date and copies none of it.
 - **Reason**: Execute needs Scenarios, Tasks and gates; the teammate's document stays theirs.
@@ -520,16 +529,17 @@ Decisions added by Spec Review SR1 (`.specs/features/integrate-skills/spec-revie
 - **Binds**: project · **Decided by**: user
 
 ### D-grill-in-spec-driven.47 · Implicit-requirement sweep for this feature
-- **Choice**: concurrency: D-grill-in-spec-driven.7. Idempotency and retry: D-grill-in-spec-driven.25. External-dependency failure: tracker failure per D-grill-in-spec-driven.25, missing `fd` per D-grill-in-spec-driven.18, missing graphify stops `prep_review.py` as today. State-transition integrity: rewriting a Decision in another record (D-grill-in-spec-driven.15). Partial failure: the draft record (D-grill-in-spec-driven.11). Input validation: the `summary.md` fallback (D-grill-in-spec-driven.17). Auth and rate limits: N/A because there is no service and tracker access uses the user's own CLI login. Observability: N/A because nothing runs unattended; records and `validation.md` are the audit trail. Data lifecycle: records are never deleted; `retired` records are skipped by the read rule.
+- **Choice**: concurrency: D-grill-in-spec-driven.7. Idempotency and retry: D-grill-in-spec-driven.25. External-dependency failure: tracker failure per D-grill-in-spec-driven.25, missing `fd` per D-grill-in-spec-driven.18, missing graphify stops `prep_review.py` as today. State-transition integrity: rewriting a Decision in another record (D-grill-in-spec-driven.15). Partial failure: the draft record (D-grill-in-spec-driven.11). Input validation: the `summary.md` fallback (D-grill-in-spec-driven.17). Auth and rate limits: N/A because there is no service and tracker access uses the user's own CLI login. Observability: N/A because nothing runs unattended; records and `validation.md` are the audit trail. Data lifecycle: records are never deleted; a Decision that stops applying is rewritten to say so.
 - **Reason**: the Large-scope sweep was skipped in the first grill.
 - **Trade-off**: none.
 - **Binds**: feature · **Decided by**: user (two branches), agent (the rest)
+- **Changed**: 2026-11-14 by integrate-skills (spec-review-2 SR2-F4): `retired` removed from the data-lifecycle line.
 
 ## Consequences
 
 - spec-driven's Specify, Design, Tasks, Execute, validate and memory references, its SKILL.md auto-sizing table, its validators and `validate_scenarios.py` change; `discuss.md` is deleted.
 - `skills/grilling/` is added; `domain-modeling` loses `ADR-FORMAT.md` and gains the Grilling Record and `summary.md` formats.
-- Six skills are deleted and `setup-matt-pocock-skills` becomes `setup-spec-driven`; `install.sh` removes their installed copies.
+- Seven skills are deleted and `setup-matt-pocock-skills` becomes `setup-spec-driven`; `install.sh` removes their installed copies when they came from this repo.
 - Both reviewer agents, `review.md` and `finding-format.md` change.
 - `tdd`, `diagnosing-bugs`, `improve-codebase-architecture`, `grill-with-docs` and `prototype` read and write Decisions the new way; `prototype` and `diagnosing-bugs` hand off to Specify.
 - Off-limits from now on: writing ADRs or `AD-NNN` entries, per-feature `context.md`, pace menus, building outside spec-driven, publishing Tickets without an explicit go-ahead, any model-driven `/code-review`, editing a teammate's foreign plan, and deleting `graphify-out/`.
@@ -538,6 +548,6 @@ Decisions added by Spec Review SR1 (`.specs/features/integrate-skills/spec-revie
 ## Related
 
 - Spec: `.specs/features/integrate-skills/spec.md`
-- Spec Review: `.specs/features/integrate-skills/spec-review-1.md`
+- Spec Reviews: `.specs/features/integrate-skills/spec-review-1.md`, `.specs/features/integrate-skills/spec-review-2.md`
 - Glossary terms added or changed in `CONTEXT.md`: Decision, Grilling Record, Ticket, Task, Spec
 - Legacy decisions in this repo: `docs/adr/0001-only-execution-approval-authorizes-building.md`, `docs/adr/0002-scenarios-not-tests-are-the-contract.md`, `docs/adr/0003-one-source-generated-harness-adapters.md`

@@ -53,7 +53,7 @@ A plan written by spec-driven under the current rules: its Spec links its Grilli
 _Avoid_: new plan, current plan
 
 **Legacy plan**:
-A plan written by spec-driven under older rules, with no Grilling Record link or with a per-feature `context.md`. It is still read and reviewed; the newer structural checks only warn.
+A plan written by spec-driven under older rules: its Spec has no Grilling Record link. It is still read and reviewed; the newer structural checks only warn.
 _Avoid_: old spec, outdated plan
 
 **Foreign plan**:

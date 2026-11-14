@@ -4,7 +4,7 @@
 
 **Grilling Record**: [`.specs/decisions/grill-in-spec-driven.md`](../../decisions/grill-in-spec-driven.md)
 
-**Spec Reviews**: [`spec-review-1.md`](spec-review-1.md) (Dispositions recorded; changes applied in place)
+**Spec Reviews**: [`spec-review-1.md`](spec-review-1.md), [`spec-review-2.md`](spec-review-2.md) (Dispositions recorded; changes applied in place)
 
 ## Problem Statement
 
@@ -59,7 +59,7 @@ Otherwise: Smell Baseline only.
 - [ ] Every scope produces `tasks.md` grouped into Tickets of about one day.
 - [ ] Legacy and foreign plans can be read, reviewed and built from without editing them.
 - [ ] 0 installed skills offer an implementation path outside spec-driven, and no published Ticket invites an agent to build it directly.
-- [ ] All 24 `test` Scenarios pass under `python3 -m unittest discover -s tests`, and all 50 `inspect` Scenarios have a PASS row in `validation.md`.
+- [ ] All 31 `test` Scenarios pass under `python3 -m unittest discover -s tests`, and all 50 `inspect` Scenarios have a PASS row in the Scenario-Anchored table of `validation.md`.
 
 ## Out of Scope
 
@@ -89,7 +89,7 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 | [D-grill-in-spec-driven.5](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven5--decision-files-under-specsdecisions-with-a-summarymd-index) | Where Decisions live | `.specs/decisions/` files plus `summary.md` index | scales to large work repos | user | project |
 | [D-grill-in-spec-driven.6](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven6--one-grilling-record-per-grilling-session-complete-by-prompt) | Unit of a record | one Grilling Record per session, one choice per Decision, completeness by prompt | decisions form one chain | user | project |
 | [D-grill-in-spec-driven.7](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven7--every-feature-grill-writes-a-grilling-record-named-by-slug) | Record names and IDs | every feature grill writes `<slug>.md`; slug unique; IDs `D-<slug>.k` | no silent collisions across branches | user | project |
-| [D-grill-in-spec-driven.8](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven8--summarymd-is-a-table-of-all-decision-files) | `summary.md` shape | `File \| Date \| Summary \| Status \| Binds \| Areas \| Specs`, sorted by Date; Status `active` or `retired` | cheap filtered first read | user | project |
+| [D-grill-in-spec-driven.8](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven8--summarymd-is-a-table-of-all-decision-files) | `summary.md` shape | `File \| Date \| Summary \| Status \| Binds \| Areas \| Specs`, sorted by Date; a record is `draft` or `active`, and only finished (`active`) records have a row | cheap filtered first read | user | project |
 | [D-grill-in-spec-driven.9](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven9--the-file-is-a-grilling-record) | Name | Grilling Record | names what it is | user | project |
 | [D-grill-in-spec-driven.10](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven10--binds-test) | Binds test | project when a future feature must follow it or knowingly change it | Binds decides who reads it | user | project |
 | [D-grill-in-spec-driven.11](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven11--write-timing) | Write timing | record created as `draft` at the first answer, appended per answer, resumed if found; spec after shared understanding | survives compaction and crashes | user | project |
@@ -98,11 +98,11 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 | [D-grill-in-spec-driven.14](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven14--vendored-grilling-is-the-one-source-of-grill-rules) | Source of grill rules | vendored `skills/grilling/`; domain-modeling owns formats; Specify calls both by name, sibling fallback | one source; fixes opencode | user | project |
 | [D-grill-in-spec-driven.15](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven15--changed-decisions-are-rewritten-in-place) | Changed Decisions | rewritten in place with a `Changed` line; review-added Decisions go to `## Review` | clear docs; git keeps history | user | project |
 | [D-grill-in-spec-driven.16](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven16--design-writes-into-the-features-grilling-record) | Design Decisions | `## Design` section in the feature's record | one history file | user | project |
-| [D-grill-in-spec-driven.17](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven17--one-read-rule-for-every-consumer) | Read rule | discovery, `summary.md`, `active` records only, header fallback, legacy sources incl. per-context `docs/adr/` and legacy `context.md` | cheap and complete | user | project |
+| [D-grill-in-spec-driven.17](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven17--one-read-rule-for-every-consumer) | Read rule | discovery, `summary.md`, `active` records only (`draft` skipped), header fallback, legacy sources incl. per-context `docs/adr/`, and a feature's `context.md` whenever it exists | cheap and complete | user | project |
 | [D-grill-in-spec-driven.18](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven18--discovery-is-a-general-fd-listing) | Discovery | two general `fd` listings; pause if `fd` missing | finds unknown flows, sees gitignored files | user | project |
 | [D-grill-in-spec-driven.19](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven19--discovery-runs-every-time-and-is-not-stored) | Discovery storage | runs every time, never stored; used sources cited in the record | never stale | user | project |
 | [D-grill-in-spec-driven.20](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven20--reviewer-checks-against-grilling-records) | Reviewer checks | record-vs-spec, agent-decided, conflicts, completeness, bundled choices | reviewer is the completeness guard | user | project |
-| [D-grill-in-spec-driven.21](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven21--retirements-and-the-review-distinction) | Retirements | `ask-matt`, `implement`, `to-spec`, `to-tickets`, `triage`, `wayfinder`; Verifier automatic, `/code-review` human-only | one implementation path | user | project |
+| [D-grill-in-spec-driven.21](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven21--retirements-and-the-review-distinction) | Retirements | `ask-matt`, `implement`, `to-spec`, `to-tickets`, `triage`, `wayfinder`, `wizard`; no exception to the single path; Verifier automatic, `/code-review` human-only | one implementation path | user | project |
 | [D-grill-in-spec-driven.22](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven22--setup-spec-driven) | Setup skill | renamed `setup-spec-driven`; tracker + domain docs only | names the workflow | user | project |
 | [D-grill-in-spec-driven.23](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven23--tickets-are-day-sized-slices-of-tasks) | Ticket vs Task | Tickets are day-sized slices made of Tasks, sliced top-down | product team follows deliverables | user | project |
 | [D-grill-in-spec-driven.24](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven24--tasks-at-every-scope) | Tasks at every scope | `tasks.md` always written | the user reviews work through it | user | project |
@@ -114,17 +114,17 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 | [D-grill-in-spec-driven.30](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven30--record-names-and-sections) | Record sections | `<slug>.md`; feature records grow `## Design` and `## Review` | one naming rule | agent | project |
 | [D-grill-in-spec-driven.31](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven31--non-feature-grills-write-records-too) | Non-feature grills | write a record with Specs `none`; Specify continues it | same kind of record everywhere | agent | project |
 | [D-grill-in-spec-driven.32](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven32--summarymd-holds-only-the-index) | `summary.md` contents | only the table and the legacy-path lines | short first read | agent | project |
-| [D-grill-in-spec-driven.33](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven33--review-snapshot-covers-decisions-and-every-glossary) | Review snapshot | covers `.specs/decisions/`, `CONTEXT-MAP.md` and every `CONTEXT.md`; lists the record | reviews must not stop on planning output | agent | project |
+| [D-grill-in-spec-driven.33](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven33--review-snapshot-covers-decisions-and-every-glossary) | Review snapshot | covers `.specs/decisions/`, `CONTEXT-MAP.md` and every `CONTEXT.md`; lists the record, and `context.md` whenever it exists | reviews must not stop on planning output; locked decisions stay visible | agent (`context.md` rule: user) | project |
 | [D-grill-in-spec-driven.34](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven34--validator-changes) | Validator changes | rename section; header-name cell checks; Ticket checks; legacy plans warn; foreign plans unvalidated | gates follow the new artifacts | agent | project |
-| [D-grill-in-spec-driven.35](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven35--installer-changes) | Installer changes | retire skills, install `grilling`, warn when `fd` is missing | stale installed copies keep old routes | agent | project |
+| [D-grill-in-spec-driven.35](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven35--installer-changes) | Installer changes | retire skills, install `grilling`, warn when `fd` is missing; delete a retired folder only when its `SKILL.md` matches what this repo shipped and it is not a symlink, else warn and skip | stale installed copies keep old routes; the skills folder is shared | agent (provenance check: user) | project |
 | [D-grill-in-spec-driven.36](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven36--statemd-keeps-only-the-handoff) | `STATE.md` | keeps only `## Handoff` | Decisions live in records | agent | project |
 | [D-grill-in-spec-driven.37](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven37--improvement-ideas-during-execute) | Improvement ideas | surfaced; Out of Scope row only on a go-ahead | no scope creep | agent | project |
-| [D-grill-in-spec-driven.38](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven38--test-strategy-for-a-prompt-and-script-repository) | Test strategy | `unittest` with real graphify for scripts; `inspect` for prose and the missing-`fd` warning | prose tests would be implementation-coupled | agent | feature |
+| [D-grill-in-spec-driven.38](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven38--test-strategy-for-a-prompt-and-script-repository) | Test strategy | `unittest` with real graphify for scripts; fixtures as `.md` files under `tests/fixtures/`; `inspect` for prose and the missing-`fd` warning | prose tests would be implementation-coupled; inline fixture text counts as extra claims | agent (graphify, `fd` check: user) | feature |
 | [D-grill-in-spec-driven.39](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven39--ticket-markup-in-tasksmd) | Ticket markup | `## Tickets` with `### K<n>:` blocks, one phase per Ticket | parser stays untouched | agent | project |
 | [D-grill-in-spec-driven.40](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven40--prep_reviewpy-gates-the-mandatory-plan-files) | Mandatory plan files | `prep_review.py spec` stops without `tasks.md`, or without `design.md` at Medium+ | deterministic enforcement | agent | project |
 | [D-grill-in-spec-driven.41](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven41--one-home-for-the-read-rule-and-discovery) | Home of the read rule | `spec-driven/references/decisions.md`; other skills link to it | one source for ten consumers | agent | project |
-| [D-grill-in-spec-driven.42](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven42--proof-types-test-and-inspect) | Proof types | `test` or `inspect`; gate skips `inspect`; Verifier writes a `validation.md` row; `validate_scenarios.py` accepts PASS rows | prose cannot be unit tested | user | project |
-| [D-grill-in-spec-driven.43](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven43--three-kinds-of-plan) | Plan kinds | native, legacy (warnings) and foreign (never validated or edited) | work with teammates on other flows | user | project |
+| [D-grill-in-spec-driven.42](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven42--proof-types-test-and-inspect) | Proof types | `test` or `inspect`; gate skips `inspect`; one row per Scenario in the Verifier's Scenario-Anchored table; `validate_scenarios.py` reads it by header name and accepts `PASS` | prose cannot be unit tested; two tables could disagree | user | project |
+| [D-grill-in-spec-driven.43](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven43--three-kinds-of-plan) | Plan kinds | native, legacy (warnings) and foreign (never validated or edited); the `**Grilling Record**:` line alone separates native from legacy; foreign reports in `.specs/reviews/<path slug>/` | work with teammates on other flows | user | project |
 | [D-grill-in-spec-driven.44](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven44--building-from-a-foreign-plan) | Building from a foreign plan | Specify takes it as input and writes a native spec linking the source | Execute needs Scenarios and gates | user | project |
 | [D-grill-in-spec-driven.45](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven45--fix-tickets) | Fix Tickets | one fix Ticket per review or Verifier round | every Task in a Ticket; product team sees fixes | user | project |
 | [D-grill-in-spec-driven.46](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven46--graphify-out-is-never-deleted) | `graphify-out/` | never deleted, even when gitignored; refreshed with `graphify update .` | an agent deleted it at work | user | project |
@@ -136,6 +136,7 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 | omp loads skills by name | unknown; the sibling-path fallback covers it | omp is not installed here | n |
 | The installed `validate_spec.py` still requires the old `Assumptions & Open Questions` heading | its one error on this spec is expected until T4 lands | this spec is written to the new rules on purpose (D-grill-in-spec-driven.27) | y |
 | The installed `validate_scenarios.py` fails every `inspect` Scenario | per-Task gates pass only `test` IDs until T2 lands | the `inspect` proof type is built in K1 | y |
+| The Scenario checker reads every line of a test function, so inline fixture text counts as extra claims | fixture specs, tasks and validation files are `.md` files under `tests/fixtures/`, never text inside a test function | `scenarios_lib.py:184-220` (`parse_test_file`); SR2-F3 | y |
 
 **Implicit-requirement sweep** (D-grill-in-spec-driven.47):
 
@@ -146,7 +147,7 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 | Idempotency / retry / duplicate handling | TKT-06.S2 (published Ticket never re-created) |
 | Auth boundaries & rate limits | N/A because there is no service; tracker access uses the user's own CLI login, and its failures fall under TKT-06.S3 |
 | Concurrency / ordering | REC-01 (slug names cannot collide silently across branches), REC-03 (rows sorted by Date) |
-| Data lifecycle / expiry | records are never deleted; READ-01 skips `retired` and `draft` records |
+| Data lifecycle / expiry | records are never deleted; a Decision that stops applying is rewritten to say so (REC-05); READ-01 skips `draft` records |
 | Observability | N/A because nothing runs unattended; Grilling Records and `validation.md` are the audit trail |
 | External-dependency failure | READ-03 (`fd` missing), TKT-06.S3 (tracker failure); missing graphify stops `prep_review.py` as today |
 | State-transition integrity | REC-05.S2 (a Decision in another record is rewritten in that record) |
@@ -486,15 +487,15 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
 **Acceptance Criteria**:
 
-1. **READ-01**: WHEN a consumer starts work on paths in a repository with `summary.md` THEN it SHALL open exactly the `active` records that either bind the project with Areas overlapping those paths or `*`, or name its feature in Specs, and SHALL skip `draft` and `retired` records.
+1. **READ-01**: WHEN a consumer starts work on paths in a repository with `summary.md` THEN it SHALL open exactly the `active` records that either bind the project with Areas overlapping those paths or `*`, or name its feature in Specs, and SHALL skip `draft` records.
 
    ```gherkin
    Scenario: READ-01.S1 filtered read
-     Given summary.md rows: billing-rules project src/billing/ active; money project * active; old-billing project src/billing/ retired; dark-mode feature src/ui/ active for feature dark-mode
+     Given summary.md rows: billing-rules project src/billing/ active; money project * active; dark-mode feature src/ui/ active for feature dark-mode
      And billing-ledger.md has header "Status: draft" with Areas src/billing/ and no summary.md row
      When tdd starts a Task touching src/billing/invoice.py for feature invoice-pdf
      Then the agent opens billing-rules.md and money.md
-     And it does not open old-billing.md, dark-mode.md or billing-ledger.md
+     And it does not open dark-mode.md or billing-ledger.md
    ```
 
    **Proof**: inspect
@@ -596,7 +597,7 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
    **Proof**: test
 
-2. **REV-02**: WHEN `prep_review.py spec` prints the Review context THEN it SHALL list the Grilling Records whose `summary.md` row names the feature; for a native feature it SHALL NOT list `context.md`, and for a legacy feature it SHALL list `context.md` as a legacy decision source.
+2. **REV-02**: WHEN `prep_review.py spec` prints the Review context THEN it SHALL list the Grilling Records whose `summary.md` row names the feature, and SHALL list the feature's `context.md` as a legacy decision source whenever that file exists, whatever the plan kind.
 
    ```gherkin
    Scenario: REV-02.S1 review context lists the record
@@ -614,6 +615,15 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
      Given a feature old-demo whose spec has no Grilling Record line and whose folder has a committed context.md
      When prep_review.py spec old-demo runs
      Then its output lists .specs/features/old-demo/context.md as a legacy decision source
+   ```
+
+   **Proof**: test
+
+   ```gherkin
+   Scenario: REV-02.S3 native feature keeps its context
+     Given a feature re-demo whose spec has a Grilling Record line and whose folder has a committed context.md
+     When prep_review.py spec re-demo runs
+     Then its output lists .specs/features/re-demo/context.md as a legacy decision source
    ```
 
    **Proof**: test
@@ -893,7 +903,7 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
    **Proof**: test
 
-3. **PLAN-03**: WHEN a consumer works on a legacy feature that has a `context.md` THEN it SHALL read that `context.md` as a legacy decision source.
+3. **PLAN-03**: WHEN a consumer works on a feature that has a `context.md` THEN it SHALL read that `context.md` as a legacy decision source, whatever the plan kind.
 
    ```gherkin
    Scenario: PLAN-03.S1 legacy context is read
@@ -904,7 +914,7 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
    **Proof**: inspect
 
-4. **PLAN-04**: WHEN `prep_review.py spec` is given the path of a foreign plan THEN it SHALL skip the structural validators, say why, name a report path under `.specs/reviews/`, and leave the foreign file unchanged.
+4. **PLAN-04**: WHEN `prep_review.py spec` is given the path of a foreign plan, a file or a folder, THEN it SHALL skip the structural validators, say why, name the report path `.specs/reviews/<repo-relative path as a slug>/spec-review-<n>.md` with run numbers counted per plan, treat a folder as one plan made of every markdown file in it, and leave the foreign files unchanged.
 
    ```gherkin
    Scenario: PLAN-04.S1 review a teammate's plan
@@ -912,8 +922,30 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
      When prep_review.py spec docs/rfcs/042-billing.md runs
      Then it exits 0
      And its output says the structural validators were skipped because the plan is foreign
-     And its output names a report path under .specs/reviews/
+     And its output names the report path .specs/reviews/docs-rfcs-042-billing/spec-review-1.md
      And docs/rfcs/042-billing.md is unchanged
+   ```
+
+   **Proof**: test
+
+   ```gherkin
+   Scenario: PLAN-04.S2 same-named plans keep separate histories
+     Given a fixture repository with committed .kiro/specs/payments/design.md and .kiro/specs/orders/design.md
+     And .specs/reviews/kiro-specs-payments-design/spec-review-1.md already exists
+     When prep_review.py spec .kiro/specs/orders/design.md runs
+     Then its output names the report path .specs/reviews/kiro-specs-orders-design/spec-review-1.md
+     And its output says there is no previous run
+   ```
+
+   **Proof**: test
+
+   ```gherkin
+   Scenario: PLAN-04.S3 a folder is one plan
+     Given a fixture repository with committed .kiro/specs/payments/requirements.md, design.md and tasks.md
+     When prep_review.py spec .kiro/specs/payments/ runs
+     Then it exits 0
+     And its output lists all three files as the plan files
+     And its output names the report path .specs/reviews/kiro-specs-payments/spec-review-1.md
    ```
 
    **Proof**: test
@@ -943,12 +975,13 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
 **Acceptance Criteria**:
 
-1. **PROOF-01**: WHEN `validate_scenarios.py` checks a Scenario whose proof type is `inspect` THEN it SHALL accept a PASS row for that Scenario in the feature's `validation.md` as its proof, and SHALL fail the Scenario when the row is missing or reads FAIL.
+1. **PROOF-01**: WHEN `validate_scenarios.py` checks a Scenario whose proof type is `inspect` THEN it SHALL find the Scenario-Anchored table in the feature's `validation.md` by its `Scenario` and `Result` headers and SHALL accept the Scenario only when exactly one row carries its ID and that row's Result is `PASS`, with or without the `✅` mark; it SHALL fail the Scenario when the row is missing, when its Result is `❌ GAP`, or when two rows carry the same ID.
 
    ```gherkin
    Scenario: PROOF-01.S1 pass row proves an inspect scenario
      Given a spec whose Scenario DEMO-01.S1 has proof type inspect and no test claims it
-     And validation.md has the row "DEMO-01.S1 | PASS | skills/demo/SKILL.md:12 | the rule is stated"
+     And validation.md has a table with headers "Scenario | Spec-defined outcome (Then) | file:line + assertion expression | Result"
+     And that table has the row "DEMO-01.S1 | the rule is stated | skills/demo/SKILL.md:12 - the rule is stated in step 3 | PASS"
      When validate_scenarios.py runs on the feature
      Then it exits 0
    ```
@@ -958,7 +991,7 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
    ```gherkin
    Scenario: PROOF-01.S2 missing row fails
      Given a spec whose Scenario DEMO-01.S1 has proof type inspect and no test claims it
-     And validation.md has no row for DEMO-01.S1
+     And validation.md has the Scenario-Anchored table with no row for DEMO-01.S1
      When validate_scenarios.py runs on the feature
      Then it exits 1
      And its output names DEMO-01.S1
@@ -967,9 +1000,9 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
    **Proof**: test
 
    ```gherkin
-   Scenario: PROOF-01.S3 fail row fails
+   Scenario: PROOF-01.S3 gap row fails
      Given a spec whose Scenario DEMO-01.S1 has proof type inspect
-     And validation.md has the row "DEMO-01.S1 | FAIL | skills/demo/SKILL.md:12 | the rule is missing"
+     And the Scenario-Anchored table has the row "DEMO-01.S1 | the rule is stated | skills/demo/SKILL.md:12 - the rule is missing | ❌ GAP"
      When validate_scenarios.py runs on the feature
      Then it exits 1
      And its output names DEMO-01.S1
@@ -977,14 +1010,35 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
    **Proof**: test
 
-2. **PROOF-02**: WHILE executing a Task, the per-Task gate SHALL pass only `test` Scenario IDs to `validate_scenarios.py`; the Verifier SHALL check every `inspect` Scenario against the final files and write one `validation.md` row per Scenario with its ID, PASS or FAIL, the `file:line` read and a one-sentence reason.
+   ```gherkin
+   Scenario: PROOF-01.S4 pass with the check mark is accepted
+     Given a spec whose Scenario DEMO-01.S1 has proof type inspect and no test claims it
+     And the Scenario-Anchored table has the row "DEMO-01.S1 | the rule is stated | skills/demo/SKILL.md:12 - the rule is stated in step 3 | ✅ PASS"
+     When validate_scenarios.py runs on the feature
+     Then it exits 0
+   ```
+
+   **Proof**: test
+
+   ```gherkin
+   Scenario: PROOF-01.S5 duplicate rows fail
+     Given a spec whose Scenario DEMO-01.S1 has proof type inspect
+     And the Scenario-Anchored table has two rows for DEMO-01.S1, one with Result "✅ PASS" and one with Result "❌ GAP"
+     When validate_scenarios.py runs on the feature
+     Then it exits 1
+     And its output says DEMO-01.S1 has more than one row
+   ```
+
+   **Proof**: test
+
+2. **PROOF-02**: WHILE executing a Task, the per-Task gate SHALL pass only `test` Scenario IDs to `validate_scenarios.py`; the Verifier SHALL check every `inspect` Scenario against the final files and record it in the Scenario-Anchored table of `validation.md`, the same table that holds the `test` Scenarios, with exactly one row per Scenario: its ID, the spec-defined outcome, the `file:line` read with a one-sentence reason, and a Result of PASS or GAP.
 
    ```gherkin
    Scenario: PROOF-02.S1 inspect scenarios checked once by the verifier
      Given an approved Task T4 that claims test Scenario CSV-01.S1 and inspect Scenario CSV-02.S1
      When the agent runs T4's gate
      Then validate_scenarios.py is called with --only CSV-01.S1
-     And after the last Task the Verifier's validation.md has a row for CSV-02.S1 with PASS or FAIL, a file:line and a reason
+     And after the last Task the Scenario-Anchored table in validation.md has exactly one row for CSV-02.S1 with a file:line, a reason and a Result of PASS or GAP
    ```
 
    **Proof**: inspect
@@ -1001,13 +1055,33 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
 **Acceptance Criteria**:
 
-1. **FLOW-01**: WHEN `install.sh` runs THEN it SHALL remove installed copies of `ask-matt`, `implement`, `to-spec`, `to-tickets`, `triage`, `wayfinder` and `setup-matt-pocock-skills`.
+1. **FLOW-01**: WHEN `install.sh` runs THEN it SHALL remove installed copies of `ask-matt`, `implement`, `to-spec`, `to-tickets`, `triage`, `wayfinder`, `wizard` and `setup-matt-pocock-skills`, deleting a folder only when it is not a symlink and its `SKILL.md` contains the phrase this repository shipped for that skill; otherwise it SHALL print `skipped <name>: not installed by this repo` and leave the folder unchanged.
 
    ```gherkin
    Scenario: FLOW-01.S1 retired skills removed
-     Given a temporary Claude config directory whose skills/ holds ask-matt, implement, to-spec, to-tickets, triage, wayfinder and setup-matt-pocock-skills
+     Given a temporary Claude config directory whose skills/ holds this repository's shipped copies of ask-matt, implement, to-spec, to-tickets, triage, wayfinder, wizard and setup-matt-pocock-skills
      When install.sh runs with that directory
-     Then none of those seven skill directories exist
+     Then none of those eight skill directories exist
+   ```
+
+   **Proof**: test
+
+   ```gherkin
+   Scenario: FLOW-01.S2 another source's skill survives
+     Given a temporary Claude config directory whose skills/triage/SKILL.md was written by another source and lacks this repository's phrase
+     When install.sh runs with that directory
+     Then skills/triage/SKILL.md still exists with the same content
+     And the output says "skipped triage: not installed by this repo"
+   ```
+
+   **Proof**: test
+
+   ```gherkin
+   Scenario: FLOW-01.S3 a symlinked skill survives
+     Given a temporary Claude config directory whose skills/implement is a symlink to a directory holding this repository's shipped implement skill
+     When install.sh runs with that directory
+     Then skills/implement is still a symlink and its target is unchanged
+     And the output says "skipped implement: not installed by this repo"
    ```
 
    **Proof**: test
@@ -1188,10 +1262,11 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
 ## Success Criteria
 
-- [ ] `python3 -m unittest discover -s tests` passes all 24 `test` Scenarios, using the real `graphify`.
-- [ ] `validation.md` holds a PASS row for each of the 50 `inspect` Scenarios, and `validate_scenarios.py integrate-skills` exits 0.
+- [ ] `python3 -m unittest discover -s tests` passes all 31 `test` Scenarios, using the real `graphify`.
+- [ ] the Scenario-Anchored table in `validation.md` holds exactly one PASS row for each of the 50 `inspect` Scenarios, and `validate_scenarios.py integrate-skills` exits 0.
 - [ ] `grep -rn "docs/adr" skills agents` finds only legacy-read instructions.
 - [ ] `grep -rn "ready-for-agent\|agent-grabbable" skills agents` finds nothing.
 - [ ] `grep -n "into the real code" skills/prototype/SKILL.md` finds nothing.
 - [ ] `grep -rln "superseded\|Amendments" skills agents` finds nothing outside historical text.
-- [ ] A fresh `install.sh` leaves none of the seven retired skills in `~/.claude/skills`.
+- [ ] A fresh `install.sh` leaves none of this repository's eight retired skill copies in `~/.claude/skills`, and leaves a same-named skill from another source in place.
+- [ ] `ls skills/wizard` fails, and `grep -rn "wizard" README.md skills agents install.sh` finds only the `RETIRED_SKILLS` entry and its phrase.

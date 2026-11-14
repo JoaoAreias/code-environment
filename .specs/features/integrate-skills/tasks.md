@@ -15,7 +15,7 @@ Implement these tasks with the `spec-driven` skill: **activate it by name and fo
 **Spec**: `.specs/features/integrate-skills/spec.md`
 **Design**: `.specs/features/integrate-skills/design.md`
 **Grilling Record**: `.specs/decisions/grill-in-spec-driven.md`
-**Spec Review**: `.specs/features/integrate-skills/spec-review-1.md` (Dispositions applied)
+**Spec Reviews**: `.specs/features/integrate-skills/spec-review-1.md`, `.specs/features/integrate-skills/spec-review-2.md` (Dispositions applied)
 **Status**: Draft
 
 ---
@@ -28,7 +28,9 @@ Provenance: no testing guidelines in the repo (no `AGENTS.md`, `CLAUDE.md`, `CON
 | --- | --- | --- | --- | --- | --- |
 | Deterministic scripts | `skills/spec-driven/scripts/validate_spec.py`, `validate_tasks.py`, `validate_scenarios.py`, `prep_review.py` | integration (`unittest`, fixture repo in a temp dir, script run as a subprocess, real `graphify` on PATH) | test | every `test` Scenario of the script, 1:1 | `tests/test_*.py` |
 | Installer | `install.sh` | integration (`unittest`, temp `CLAUDE_CONFIG_DIR`/`OPENCODE_CONFIG_DIR`, real `graphify` on PATH) | test, except the missing-`fd` warning (inspect) | every `test` Scenario of the installer, 1:1 | `tests/test_install.py` |
-| Skill and agent prose | `skills/**/SKILL.md`, `skills/**/references/*.md`, `agents/*.md` | inspect | inspect | every `inspect` Scenario checked once by the Verifier against the final files | `validation.md` inspect rows (ID, PASS/FAIL, `file:line`, reason) |
+| Skill and agent prose | `skills/**/SKILL.md`, `skills/**/references/*.md`, `agents/*.md` | inspect | inspect | every `inspect` Scenario checked once by the Verifier against the final files | one row per Scenario in `validation.md`'s Scenario-Anchored table (`file:line` and reason in the evidence cell, Result `PASS`) |
+
+**Fixture rule** (D-grill-in-spec-driven.38): sample specs, tasks, validation files, foreign plans and `SKILL.md` copies are `.md` files under `tests/fixtures/<case>/`, copied into the temp repo by `tests/fixtures.py`. No test function contains sample Scenario text, because `scenarios_lib.parse_test_file` reads every line of a test function as a possible Scenario claim. Each test Task adds the fixture files its tests need.
 
 ## Gate Check Commands
 
@@ -47,8 +49,8 @@ Before T4 lands, `validate_spec.py` reports one expected error on this spec (the
 ## Tickets
 
 ### K1: Gates accept inspect proofs
-**Delivers**: a Scenario marked `**Proof**: inspect` passes `validate_scenarios.py` when `validation.md` has a PASS row for it; Execute and the Verifier know which Scenarios each one checks.
-**Covers**: PROOF-01, PROOF-02 · PROOF-01.S1, PROOF-01.S2, PROOF-01.S3, PROOF-02.S1
+**Delivers**: a Scenario marked `**Proof**: inspect` passes `validate_scenarios.py` when the Scenario-Anchored table in `validation.md` has exactly one PASS row for it; Execute and the Verifier know which Scenarios each one checks.
+**Covers**: PROOF-01, PROOF-02 · PROOF-01.S1, PROOF-01.S2, PROOF-01.S3, PROOF-01.S4, PROOF-01.S5, PROOF-02.S1
 **Blocked by**: none
 **Tasks**: T1, T2, T3
 
@@ -59,8 +61,8 @@ Before T4 lands, `validate_spec.py` reports one expected error on this spec (the
 **Tasks**: T4, T5, T6, T7
 
 ### K3: Review prep and installer follow the new rules
-**Delivers**: `/spec-review` snapshots records and every glossary, lists the feature's records (or a legacy `context.md`), stops on missing plan files, and reviews a teammate's foreign plan without touching it; `install.sh` removes retired skills and warns about `fd`.
-**Covers**: REV-01, REV-02, TKT-01, TKT-02, PLAN-04, FLOW-01, READ-04 · REV-01.S1, REV-01.S2, REV-02.S1, REV-02.S2, TKT-01.S1, TKT-02.S1, TKT-02.S2, PLAN-04.S1, FLOW-01.S1, READ-04.S1
+**Delivers**: `/spec-review` snapshots records and every glossary, lists the feature's records and any `context.md`, stops on missing plan files, and reviews a teammate's foreign plan (a file or a folder, each with its own report folder) without touching it; `install.sh` removes this repository's retired skills, leaves same-named skills from other sources alone, and warns about `fd`.
+**Covers**: REV-01, REV-02, TKT-01, TKT-02, PLAN-04, FLOW-01, READ-04 · REV-01.S1, REV-01.S2, REV-02.S1, REV-02.S2, REV-02.S3, TKT-01.S1, TKT-02.S1, TKT-02.S2, PLAN-04.S1, PLAN-04.S2, PLAN-04.S3, FLOW-01.S1, FLOW-01.S2, FLOW-01.S3, READ-04.S1
 **Blocked by**: K2
 **Tasks**: T8, T9, T10, T11
 
@@ -83,7 +85,7 @@ Before T4 lands, `validate_spec.py` reports one expected error on this spec (the
 **Tasks**: T22, T23, T24, T25, T26
 
 ### K7: No side doors, no leftovers
-**Delivers**: diagnosing-bugs and prototype hand off to Specify, grill-with-docs and improve-codebase-architecture write records, retired skills are gone, and the README describes the new flow.
+**Delivers**: diagnosing-bugs and prototype hand off to Specify, grill-with-docs and improve-codebase-architecture write records, the eight retired skills, `wizard` included, are gone, and the README describes the new flow.
 **Covers**: FLOW-04, FLOW-06, REC-09 · FLOW-04.S1, FLOW-06.S1, REC-09.S1
 **Blocked by**: K6
 **Tasks**: T27, T28, T29, T30, T31
@@ -144,14 +146,15 @@ T27 → T28 → T29 → T30 → T31
 
 #### T1: Add the fixture-repository test helper
 
-**What**: `tests/fixtures.py` with a helper that builds a throwaway git repository in a temp dir (spec, tasks, design, records, summary, validation.md, glossaries) and runs a script as a subprocess, returning exit code and output. It requires the real `graphify` on PATH and fails with a clear message when it is missing.
-**Where**: `tests/fixtures.py`
+**What**: `tests/fixtures.py` with a helper that builds a throwaway git repository in a temp dir by copying a named case from `tests/fixtures/<case>/` (spec, tasks, design, records, summary, validation.md, glossaries, all as `.md` files) and runs a script as a subprocess, returning exit code and output. It requires the real `graphify` on PATH and fails with a clear message when it is missing. A first case, `tests/fixtures/base/`, holds a minimal native feature. Fixture text never lives inside a test function (see the fixture rule above).
+**Where**: `tests/fixtures.py` (with `tests/fixtures/base/`)
 **Depends on**: None
 **Reuses**: fixture layout used to smoke-test the scripts in the previous feature (scratch repo with `.specs/features/<f>/`)
 **Requirement**: PROOF-01, GRILL-05, TKT-01 (infrastructure for their tests)
 
 **Done when**:
 - [ ] `python3 -c "import sys; sys.path.insert(0, 'tests'); import fixtures"` succeeds
+- [ ] the helper builds a repo from `tests/fixtures/base/` and `validate_scenarios.py` reports no claim coming from a fixture file
 - [ ] Gate check passes: build
 
 **Tests**: none (test infrastructure; proves no Scenario)
@@ -164,28 +167,28 @@ T27 → T28 → T29 → T30 → T31
 
 #### T2: Accept inspect proofs in validate_scenarios.py
 
-**What**: `scenarios_lib.parse_spec` reads an optional `**Proof**: test|inspect` line after each Scenario's closing fence (default `test`). `validate_scenarios.py` treats a PASS row in `.specs/features/<f>/validation.md` (first cell the Scenario ID, second cell `PASS`) as the proof of an `inspect` Scenario, and reports a missing row or a FAIL row as an error naming the Scenario.
+**What**: `scenarios_lib.parse_spec` reads an optional `**Proof**: test|inspect` line after each Scenario's closing fence (default `test`). For an `inspect` Scenario, `validate_scenarios.py` finds the Scenario-Anchored table in `.specs/features/<f>/validation.md` by its `Scenario` and `Result` headers (never by position) and accepts the Scenario only when exactly one row carries its ID and that row's Result is `PASS`, with or without the `✅` mark. A missing table or row, a `❌ GAP` Result, or two rows with the same ID is an error naming the Scenario.
 **Where**: `skills/spec-driven/scripts/validate_scenarios.py`, `skills/spec-driven/scripts/scenarios_lib.py` (tests in `tests/test_validate_scenarios.py`)
 **Depends on**: T1
 **Reuses**: `parse_spec`, the missing-test check and error reporting in `validate_scenarios.py`
 **Requirement**: PROOF-01
 
 **Done when**:
-- [ ] the three Scenario tests pass and carry their Scenario text verbatim
+- [ ] the five Scenario tests pass and carry their Scenario text verbatim; their fixtures are `.md` files under `tests/fixtures/`
 - [ ] a spec with no `**Proof**:` lines behaves exactly as before (every Scenario needs a test)
 - [ ] Gate check passes: quick, scenarios, build
 
 **Tests**: integration
-**Scenarios**: PROOF-01.S1, PROOF-01.S2, PROOF-01.S3
+**Scenarios**: PROOF-01.S1, PROOF-01.S2, PROOF-01.S3, PROOF-01.S4, PROOF-01.S5
 **Gate**: quick
 
-**Commit**: `feat(spec-driven): accept Verifier inspection rows as proof for inspect Scenarios`
+**Commit**: `feat(spec-driven): accept the Verifier's Scenario table as proof for inspect Scenarios`
 
 ---
 
 #### T3: Execute and the Verifier handle inspect Scenarios
 
-**What**: `implement.md` step 5.3 passes only the Task's `test` Scenario IDs to `validate_scenarios.py --only`; `validate.md` §2 tells the Verifier to check every `inspect` Scenario against the final files and write one `validation.md` row each (ID, PASS or FAIL, `file:line`, one-sentence reason; IaC may cite command output) before running `validate_scenarios.py` on all Scenarios. The existing interactive UAT step for user-facing features stays; it is not a proof type.
+**What**: `implement.md` step 5.3 passes only the Task's `test` Scenario IDs to `validate_scenarios.py --only`; `validate.md` §2 tells the Verifier to check every `inspect` Scenario against the final files and record it in the existing Scenario-Anchored table, exactly one row per Scenario of either proof type, before running `validate_scenarios.py` on all Scenarios. For an `inspect` Scenario the evidence cell holds the `file:line` read and a one-sentence reason (IaC may cite command output) in place of a test assertion. The §2 text and the report template at the end of `validate.md` both gain that wording; no second table is added. The existing interactive UAT step for user-facing features stays; it is not a proof type.
 **Where**: `skills/spec-driven/references/implement.md`, `skills/spec-driven/references/validate.md`
 **Depends on**: T2
 **Reuses**: current step 5 and §2 text
@@ -193,6 +196,7 @@ T27 → T28 → T29 → T30 → T31
 
 **Done when**:
 - [ ] neither file tells an agent to fail a Scenario only because it has no test when its proof type is `inspect`
+- [ ] `validate.md` describes one results table and its template shows an `inspect` row in it
 - [ ] Gate check passes: full (plan excluded until T6)
 
 **Tests**: inspect
@@ -291,18 +295,18 @@ T27 → T28 → T29 → T30 → T31
 
 #### T8: Snapshot records and every glossary; list the feature's records in prep_review.py
 
-**What**: add `.specs/decisions/`, `CONTEXT-MAP.md` and every path whose basename is `CONTEXT.md` to the plan paths the pre-review commit protects; read `summary.md` and list records whose Specs names the feature; for a native feature drop `context.md` and the `STATE.md` decisions line from the Review context; for a legacy feature list `context.md` as a legacy decision source.
+**What**: add `.specs/decisions/`, `CONTEXT-MAP.md` and every path whose basename is `CONTEXT.md` to the plan paths the pre-review commit protects; read `summary.md` and list records whose Specs names the feature; list the feature's `context.md` as a legacy decision source whenever the file exists, whatever the plan kind; for a native feature drop the `STATE.md` decisions line from the Review context.
 **Where**: `skills/spec-driven/scripts/prep_review.py` (tests in `tests/test_prep_review.py`)
 **Depends on**: T7
 **Reuses**: `prep_spec`, `dirty_paths`, `must_git`
 **Requirement**: REV-01, REV-02
 
 **Done when**:
-- [ ] the four Scenario tests pass with the real `graphify`
+- [ ] the five Scenario tests pass with the real `graphify`
 - [ ] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
-**Scenarios**: REV-01.S1, REV-01.S2, REV-02.S1, REV-02.S2
+**Scenarios**: REV-01.S1, REV-01.S2, REV-02.S1, REV-02.S2, REV-02.S3
 **Gate**: quick
 
 **Commit**: `feat(spec-driven): snapshot Grilling Records and glossaries before spec review`
@@ -331,18 +335,18 @@ T27 → T28 → T29 → T30 → T31
 
 #### T10: Review a foreign plan in prep_review.py
 
-**What**: when the target is a file path outside `.specs/features/`, treat it as a foreign plan: skip the structural validators with a note saying why, name the report path `.specs/reviews/<basename>-review-<n>.md`, and never write to the plan file.
+**What**: when the target is a file or folder path outside `.specs/features/`, treat it as a foreign plan: skip the structural validators with a note saying why, and never write to the plan. The report path is `.specs/reviews/<slug>/spec-review-<n>.md`, where `<slug>` is the repo-relative path with its extension and leading dots removed and other characters turned into hyphens; `next_run` runs inside that folder, so each plan has its own run numbers and previous run. A folder target is one plan: every `*.md` file in it is listed as a plan file. A target that does not exist raises `Stop`.
 **Where**: `skills/spec-driven/scripts/prep_review.py` (tests in `tests/test_prep_review.py`)
 **Depends on**: T9
-**Reuses**: `prep_spec` argument handling and the Review context printer
+**Reuses**: `prep_spec` argument handling, `next_run` and the Review context printer
 **Requirement**: PLAN-04
 
 **Done when**:
-- [ ] the Scenario test passes
+- [ ] the three Scenario tests pass
 - [ ] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
-**Scenarios**: PLAN-04.S1
+**Scenarios**: PLAN-04.S1, PLAN-04.S2, PLAN-04.S3
 **Gate**: quick
 
 **Commit**: `feat(spec-driven): review foreign plans without validating or editing them`
@@ -351,22 +355,23 @@ T27 → T28 → T29 → T30 → T31
 
 #### T11: Retire skills and warn about fd in install.sh
 
-**What**: extend `RETIRED_SKILLS` with `ask-matt implement to-spec to-tickets triage wayfinder setup-matt-pocock-skills`; print a warning when `fd` is not on PATH and continue.
+**What**: extend `RETIRED_SKILLS` with `ask-matt implement to-spec to-tickets triage wayfinder wizard setup-matt-pocock-skills`, each paired with a short phrase from the `SKILL.md` this repository shipped. The removal loop deletes an installed folder only when it is not a symlink and its `SKILL.md` contains that phrase; otherwise it prints `skipped <name>: not installed by this repo` and leaves the folder. Print a warning when `fd` is not on PATH and continue. The test fixtures hold their own small `SKILL.md` copies with those phrases under `tests/fixtures/`, because T30 deletes the source skills.
 **Where**: `install.sh` (tests in `tests/test_install.py`)
 **Depends on**: T10
 **Reuses**: the `RETIRED_SKILLS` removal loop at `install.sh:24-28`; the graphify presence check style at `install.sh:50`
 **Requirement**: FLOW-01, READ-04
 
 **Done when**:
-- [ ] the FLOW-01 test passes with temp config dirs and the real `graphify`
+- [ ] the three FLOW-01 tests pass with temp config dirs and the real `graphify`
+- [ ] every phrase in `RETIRED_SKILLS` occurs in the matching `skills/<name>/SKILL.md` at this commit
 - [ ] the fd check prints a warning naming `fd` and does not exit
 - [ ] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
-**Scenarios**: FLOW-01.S1, READ-04.S1
+**Scenarios**: FLOW-01.S1, FLOW-01.S2, FLOW-01.S3, READ-04.S1
 **Gate**: quick
 
-**Commit**: `feat(install): remove retired skills and warn when fd is missing`
+**Commit**: `feat(install): remove only this repo's retired skills and warn when fd is missing`
 
 ---
 
@@ -415,7 +420,7 @@ T27 → T28 → T29 → T30 → T31
 
 #### T14: Write the shared read rule and discovery reference
 
-**What**: `references/decisions.md` with discovery (two `fd` commands, stop-and-ask when `fd` is missing), the `summary.md` row filter (`active` only), the header fallback for a broken index, the legacy sources (root and per-context `docs/adr/`, `STATE.md`, legacy `context.md`), the three plan kinds, the Binds test, and "cite outside sources used".
+**What**: `references/decisions.md` with discovery (two `fd` commands, stop-and-ask when `fd` is missing), the `summary.md` row filter (`active` only; `draft` records skipped; no other status exists), the header fallback for a broken index, the legacy sources (root and per-context `docs/adr/`, `STATE.md`, and a feature's `context.md` whenever it exists), the three plan kinds (the `**Grilling Record**:` line alone separates native from legacy), the Binds test, and "cite outside sources used".
 **Where**: `skills/spec-driven/references/decisions.md`
 **Depends on**: T13
 **Reuses**: D-grill-in-spec-driven.17, .18, .19 and .43 text from the Grilling Record; `skills/setup-matt-pocock-skills/domain.md:9`
@@ -601,7 +606,7 @@ T27 → T28 → T29 → T30 → T31
 
 #### T23: tdd becomes Execute's per-Task loop
 
-**What**: description and intro say it is the test-first loop spec-driven Execute runs; seams come from Scenarios and Design, asking only for unnamed interfaces; the ADR line becomes a link to `decisions.md`, so a Task reads active Decisions, root and per-context ADRs, and a legacy `context.md` before its test.
+**What**: description and intro say it is the test-first loop spec-driven Execute runs; seams come from Scenarios and Design, asking only for unnamed interfaces; the ADR line becomes a link to `decisions.md`, so a Task reads active Decisions, root and per-context ADRs, and the feature's `context.md` when one exists, before its test.
 **Where**: `skills/tdd/SKILL.md`
 **Depends on**: T22
 **Reuses**: current tdd content (tests.md, mocking.md unchanged)
@@ -744,14 +749,14 @@ T27 → T28 → T29 → T30 → T31
 
 #### T30: Delete the retired skills
 
-**What**: `git rm -r` `skills/ask-matt`, `skills/implement`, `skills/to-spec`, `skills/to-tickets`, `skills/triage`, `skills/wayfinder` and `skills/engineering-README.md`.
-**Where**: `skills/` (seven paths)
+**What**: `git rm -r` `skills/ask-matt`, `skills/implement`, `skills/to-spec`, `skills/to-tickets`, `skills/triage`, `skills/wayfinder`, `skills/wizard` and `skills/engineering-README.md`.
+**Where**: `skills/` (eight paths)
 **Depends on**: T29
 **Reuses**: none
 **Requirement**: FLOW-01 (source side; installed copies handled by T11)
 
 **Done when**:
-- [ ] `grep -rn "ask-matt\|to-tickets\|to-spec\|triage\|wayfinder\|/implement" skills agents` finds nothing outside historical records
+- [ ] `grep -rn "ask-matt\|to-tickets\|to-spec\|triage\|wayfinder\|wizard\|/implement" skills agents` finds nothing outside historical records
 - [ ] `grep -rn "ready-for-agent\|agent-grabbable" skills agents` finds nothing
 - [ ] Gate check passes: full
 
@@ -772,7 +777,7 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: none (documentation)
 
 **Done when**:
-- [ ] the README lists no retired skill as installed
+- [ ] the README lists no retired skill as installed, `wizard` included
 - [ ] Gate check passes: full
 
 **Tests**: none (documentation)
@@ -787,7 +792,7 @@ T27 → T28 → T29 → T30 → T31
 
 | Task | Scope | Status |
 | --- | --- | --- |
-| T1 | 1 helper module | ✅ Granular |
+| T1 | 1 helper module with its base fixture folder | ✅ Granular |
 | T2 | 1 check across `validate_scenarios.py` and the parser it uses | ⚠️ Multi-file, one concept |
 | T3 | 1 rule in the Execute and Verifier references | ⚠️ Multi-file, one concept |
 | T4-T10 | 1 script change each | ✅ Granular |
@@ -799,7 +804,7 @@ T27 → T28 → T29 → T30 → T31
 | T22 | 1 rule in the Execute and Verifier references | ⚠️ Multi-file, one concept |
 | T24 | review.md plus the format file it depends on | ⚠️ Multi-file, one concept |
 | T29 | 2 skills, same change | ⚠️ Multi-file, one concept |
-| T30 | 7 deletions | ⚠️ Multi-file, one concept |
+| T30 | 8 deletions | ⚠️ Multi-file, one concept |
 
 ## Diagram-Definition Cross-Check
 
