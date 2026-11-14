@@ -1,8 +1,8 @@
 # Integrate Skills Design
 
 **Spec**: `.specs/features/integrate-skills/spec.md`
-**Grilling Record**: `.specs/decisions/0001-integrate-grill-into-spec-driven.md` (Design section: D-0001.30 to D-0001.33)
-**Status**: Draft
+**Grilling Record**: `.specs/decisions/grill-in-spec-driven.md` (Design section: D-grill-in-spec-driven.38 to .41; Review section: .42 to .47)
+**Status**: Draft (revised after Spec Review SR1)
 
 ---
 
@@ -17,24 +17,29 @@ graph TD
     DM --> GWD[grill-with-docs]
     G --> GWD
     G --> ICA[improve-codebase-architecture]
-    DEC[spec-driven/references/decisions.md<br/>read rule + fd discovery + legacy check] --> S
+    DEC[spec-driven/references/decisions.md<br/>read rule + fd discovery + legacy sources + plan kinds] --> S
     DEC --> D[Design] & T[Tasks] & E[Execute]
     DEC --> SR[spec-reviewer] & CR[change-reviewer]
     DEC --> TDD[tdd] & DB[diagnosing-bugs] & ICA
-    S --> REC[(.specs/decisions/NNNN-*.md<br/>+ summary.md)]
+    S --> REC[(.specs/decisions/&lt;slug&gt;.md<br/>+ summary.md)]
     D --> REC
-    RV[review.md Amendments] --> REC
-    T --> TK[references/tickets.md<br/>slicing + publishing]
+    RV[review.md: rewrite in place, ## Review] --> REC
+    T --> TK[references/tickets.md<br/>slicing + publishing + fix Tickets]
     SET[setup-spec-driven<br/>tracker + domain docs config] --> TK
     E --> TDD
+    E --> VS[validate_scenarios.py<br/>test + inspect proofs]
+    VER[Verifier] --> VS
     DB -->|repro, root cause, seam| S
+    PR[prototype] -->|verdict| S
+    FP[foreign plan] -->|input, linked| S
 ```
 
 Flow after the change:
 
 ```
 Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-review → Dispositions
-   → ["publish tickets", optional] → Execution Approval → Execute (tdd loop per Task) → Verifier → /code-review (human)
+   → ["publish tickets", optional] → Execution Approval → Execute (tdd loop per Task, test proofs only)
+   → Verifier (all Scenarios; inspect rows in validation.md) → /code-review (human)
 ```
 
 ---
@@ -47,15 +52,16 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 | --- | --- | --- | --- | --- |
 | `skills/grilling/SKILL.md` | `symbols --match grill,session,interview`; `rg -n grilling` | synced `anthropic-skills:grilling` (not in repo) | Reuse (vendor) + Extend | add the two escapes and the Binds rule |
 | `domain-modeling/GRILLING-RECORD-FORMAT.md` | `symbols --match decision,adr,record,summary`; `rg -n ADR` | `skills/domain-modeling/ADR-FORMAT.md` | Replace | its one-paragraph rule is the cause of tiny files |
-| `spec-driven/references/decisions.md` | `symbols --match discover,scan,listing,tree`; `rg -n "AD-NNN\|docs/adr"` | `memory.md` Decisions section; scattered ADR read lines in 6 skills | New (consolidates) | one read rule instead of ten copies |
+| `spec-driven/references/decisions.md` | `symbols --match discover,scan,listing,tree`; `rg -n "AD-NNN\|docs/adr"` | `memory.md` Decisions section; scattered ADR read lines in 6 skills; `setup-matt-pocock-skills/domain.md:9` (per-context ADRs) | New (consolidates) | one read rule instead of ten copies |
 | Specify grill flow in `specify.md` | `rg -n "Discuss\|pace"` | `references/discuss.md`, `specify.md` step 1 | Extend `specify.md`, delete `discuss.md` | Discuss folds into the grill |
-| `spec-driven/references/tickets.md` | `symbols --match ticket,tracker,issue,publish`; `rg -n "to-tickets"` | `skills/to-tickets/SKILL.md` | Move + Extend | keep vertical slices, expand–contract and per-tracker shapes; resize to one day |
+| `spec-driven/references/tickets.md` | `symbols --match ticket,tracker,issue,publish`; `rg -n "to-tickets"` | `skills/to-tickets/SKILL.md` | Move + Extend | keep vertical slices, expand–contract and per-tracker shapes; resize to one day; add retry rules; drop `ready-for-agent` |
 | `setup-spec-driven` | `rg -n setup-matt-pocock` | `skills/setup-matt-pocock-skills/` | Rename + trim | drop triage labels, ADR wording |
-| Ticket checks in `validate_tasks.py` | read `validate_tasks.py` | `parse_tasks`, `check` | Extend | a second pass over a `## Tickets` section |
-| Plan-file gate and snapshot in `prep_review.py` | read `prep_review.py:206-260` | `prep_spec`, plan list at `:212` | Extend | add paths, add two STOP checks, list records |
-| Section rename in `validate_spec.py` | read `validate_spec.py:44-60,196-225` | `REQUIRED_SECTIONS`, assumptions table check | Extend | rename, require at every scope, accept `none` |
+| `inspect` proofs in `validate_scenarios.py` | read `validate_scenarios.py`, `scenarios_lib.py` `parse_spec` | missing-test check | Extend | a `**Proof**: inspect` line after a Scenario switches its proof from a test to a `validation.md` row |
+| Ticket checks in `validate_tasks.py` | read `validate_tasks.py` | `parse_tasks`, `check` | Extend | a second pass over a `## Tickets` section; legacy plans warn |
+| Plan-file gate, snapshot and foreign plans in `prep_review.py` | read `prep_review.py:206-260` | `prep_spec`, plan list at `:212` | Extend | add paths, add two STOP checks, list records, accept a foreign plan path |
+| Section rename and cell check in `validate_spec.py` | read `validate_spec.py:44-60,196-225` | `REQUIRED_SECTIONS`, assumptions table check at `:203-210` | Extend | rename, require for native specs, find tables by header names, accept `none` |
 | Retired-skill removal in `install.sh` | `symbols --match retire,retired,install` → none; read `install.sh:13,24-28` | `RETIRED_SKILLS` loop | Extend | longer list, fd warning |
-| `tests/` | `find . -name 'test_*.py'` → none; `python3 -m pytest` → not installed | none | New | stdlib `unittest`, fixture repositories in temp dirs (D-0001.30) |
+| `tests/` | `find . -name 'test_*.py'` → none; `python3 -m pytest` → not installed | none | New | stdlib `unittest`, fixture repositories in temp dirs, real graphify (D-grill-in-spec-driven.38) |
 
 ### Integration Points
 
@@ -65,6 +71,7 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 | opencode | reads `~/.claude/skills/`; agents and `/spec-review`, `/code-review` commands rendered by `render-adapters.js` (unchanged) |
 | omp | reads `~/.claude/` files; Specify's sibling-path fallback covers skill loading |
 | Issue trackers | `references/tickets.md` reads `docs/agents/issue-tracker.md` written by `setup-spec-driven` (GitHub `gh`, GitLab `glab`, local markdown, or a freeform description) |
+| graphify | required by `prep_review.py` and by the tests; `graphify-out/` is never deleted (D-grill-in-spec-driven.46) |
 
 ---
 
@@ -81,43 +88,47 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 
 - **Purpose**: owns the glossary format and the Grilling Record and `summary.md` formats; writes them during any grill.
 - **Location**: `SKILL.md` rewritten; `GRILLING-RECORD-FORMAT.md` new (record template plus `summary.md` template); `ADR-FORMAT.md` deleted; `CONTEXT-FORMAT.md` unchanged.
-- **Interfaces**: called by name with `grilling`. The record template spells out completeness rules in prose (D-0001.6): every section required; the Session path lists every option offered, including rejected ones and retries; every Decision has a trade-off; and "a record shorter than its session is wrong".
+- **Interfaces**: called by name with `grilling`. The record template spells out completeness rules in prose (D-grill-in-spec-driven.6): every section required; the Session path lists every option offered, including rejected ones and retries; one choice per Decision; every Decision has a trade-off; and "a record shorter than its session is wrong". It also states the slug rule (D-grill-in-spec-driven.7), the `draft` status and resume rule (D-grill-in-spec-driven.11), and the rewrite-in-place rule with its `Changed` line (D-grill-in-spec-driven.15).
 
 ### `skills/spec-driven/references/decisions.md` (new)
 
-- **Purpose**: the read rule, discovery, legacy check and Binds test, in one place (D-0001.33).
+- **Purpose**: the read rule, discovery, legacy sources, plan kinds and Binds test, in one place (D-grill-in-spec-driven.41).
 - **Interfaces**: linked from `specify.md`, `design.md`, `tasks.md`, `implement.md`, `standards.md` §1, both agents, `tdd`, `diagnosing-bugs`, `improve-codebase-architecture`, `domain-modeling`.
-- **Contents**: the two fd commands; the "fd missing: stop and ask" rule; the `summary.md` row filter; the legacy `docs/adr/` and `STATE.md` check; "cite outside sources used in the record's Context".
+- **Contents**: the two fd commands; the "fd missing: stop and ask" rule; the `summary.md` row filter (`active` only; `draft` and `retired` skipped); the header fallback when `summary.md` is broken; legacy sources (`STATE.md ## Decisions`, root `docs/adr/`, per-context `docs/adr/` via `CONTEXT-MAP.md` or `fd -t d -p 'docs/adr$'`, legacy `context.md`); how to tell native, legacy and foreign plans apart (D-grill-in-spec-driven.43); "cite outside sources used in the record's Context".
 
 ### spec-driven phase references (changed)
 
-- `SKILL.md`: flow line, auto-sizing table (Tasks at every scope, Design at Medium+), `.specs` tree (`decisions/`, no `context.md`), commands table (publish tickets; Discuss removed), Critical Rules (implementation only through spec-driven; Tickets published only on go-ahead).
-- `specify.md`: pre-question steps (lessons, `decisions.md` read rule, capability search, Standards); calls `grilling` + `domain-modeling`, with the sibling fallback; dimensions sweep as closing branches; incremental record; spec template with `## Decisions & Assumptions` (`ID | Decision | Choice | Rationale | Decided by | Binds`), Deferred Ideas in Out of Scope and optional `## References`; Small template gains Decisions & Assumptions.
+- `SKILL.md`: flow line, auto-sizing table (Tasks at every scope, Design at Medium+), `.specs` tree (`decisions/`, `reviews/`, no `context.md`), commands table (publish tickets; Discuss removed), Critical Rules (implementation only through spec-driven; Tickets published only on go-ahead; foreign plans never edited; `graphify-out/` never deleted).
+- `specify.md`: pre-question steps (lessons, `decisions.md` read rule, capability search, Standards); calls `grilling` + `domain-modeling`, with the sibling fallback; draft record created at the first answer and resumed if found; dimensions sweep as closing branches; spec template with `## Decisions & Assumptions` (`ID | Decision | Choice | Rationale | Decided by | Binds`), a `**Grilling Record**:` line, a `**Proof**:` line under each Scenario, Deferred Ideas in Out of Scope and optional `## References`; Small template gains Decisions & Assumptions; a foreign plan as input (D-grill-in-spec-driven.44).
 - `discuss.md`: deleted.
-- `design.md`: required at Medium+; reads via `decisions.md`; grill-style questions; `## Design` section in the record; Tech Decisions as links; supersede flow via the record.
-- `tasks.md`: never skipped; top-down Ticket slicing (D-0001.23) with the `## Tickets` markup (D-0001.31); links `tickets.md`.
-- `tickets.md` (new): slicing rules (about one day, vertical, expand–contract for wide refactors) and publishing (D-0001.25: explicit "publish tickets", Dispositions first, IDs written back, drift listed).
-- `implement.md`: no safety valve; per-Task `tdd` loop; deferred ideas surfaced, Out of Scope row on go-ahead; after the Verifier passes, say `/code-review` is available.
+- `design.md`: required at Medium+; reads via `decisions.md`; grill-style questions; `## Design` section in the record; Tech Decisions as links; changing another record's Decision rewrites it there.
+- `tasks.md`: never skipped; top-down Ticket slicing (D-grill-in-spec-driven.23) with the `## Tickets` markup (D-grill-in-spec-driven.39); proof type on each Task; links `tickets.md`.
+- `tickets.md` (new): slicing rules (about one day, vertical, expand–contract for wide refactors), fix Tickets (D-grill-in-spec-driven.45), and publishing (D-grill-in-spec-driven.25).
+- `implement.md`: no safety valve; per-Task `tdd` loop; step 5.3 passes only `test` IDs to `validate_scenarios.py --only`; deferred ideas surfaced, Out of Scope row on go-ahead; Verifier gaps become fix tasks in a fix Ticket; after the Verifier passes, say `/code-review` is available.
+- `validate.md`: §2 runs `validate_scenarios.py` on all Scenarios and, before that, writes one `validation.md` row per `inspect` Scenario (ID, PASS or FAIL, `file:line`, reason); gaps become fix tasks in a fix Ticket.
 - `memory.md`: `STATE.md` keeps `## Handoff`; the Decisions section moves to a pointer at `decisions.md`.
-- `standards.md` §1: active project Decisions are Repo Standards; discovery replaces the hand-listed source search.
-- `review.md`: Amendments step after Dispositions (D-0001.15); publish-tickets gate.
+- `standards.md` §1: active project Decisions are Repo Standards; discovery replaces the hand-listed source search. §4: `graphify-out/` is a cache that is never deleted.
+- `review.md`: after Dispositions, rewrite changed Decisions in place and add review Decisions under `## Review` (D-grill-in-spec-driven.15); accepted Change Review Findings become fix tasks in one fix Ticket; publish-tickets gate.
 - `finding-format.md`, `coding-principles.md`: ADR and `AD-NNN` wording replaced.
 
 ### Scripts (changed)
 
-- `validate_spec.py`: `REQUIRED_SECTIONS` and `REQUIRED_SECTIONS_SMALL` both contain `Decisions & Assumptions`; the cell check reads the new table (Choice and Rationale filled) and accepts a section whose body is `none`.
-- `validate_tasks.py`: a Ticket pass over `## Tickets`: every task in exactly one Ticket; Blocked by points only to earlier Tickets. `Tickets` joins `REQUIRED_SECTIONS`.
-- `prep_review.py`: plan list adds `.specs/decisions/` and `CONTEXT.md`; STOP when `tasks.md` is missing, or `design.md` at Medium+; the Review context lists records whose `summary.md` row names the feature; `context.md` and the `STATE.md` decisions line are dropped.
+- `scenarios_lib.py`: `parse_spec` reads an optional `**Proof**: test|inspect` line after each Scenario's closing fence (default `test`).
+- `validate_scenarios.py`: for an `inspect` Scenario, the proof is a row in `.specs/features/<f>/validation.md` whose first cell is the Scenario ID and second cell is `PASS`; a missing row or `FAIL` is an error naming the Scenario; tests claiming an `inspect` Scenario are still allowed.
+- `validate_spec.py`: `REQUIRED_SECTIONS` and `REQUIRED_SECTIONS_SMALL` both contain `Decisions & Assumptions`; the section accepts a body of `none`; the cell check finds the Decisions table by its `ID` and `Choice` headers and the Assumptions table by its `Assumption` and `Chosen default` headers, and names the row's first cell on error. A spec with no `**Grilling Record**:` line is legacy: the new section rule becomes a warning.
+- `validate_tasks.py`: a Ticket pass over `## Tickets`: every task in exactly one Ticket; Blocked by points only to earlier Tickets; fix Tickets are ordinary Tickets. `Tickets` joins `REQUIRED_SECTIONS`. When the sibling `spec.md` has no `**Grilling Record**:` line, the Ticket rules become warnings.
+- `prep_review.py`: plan list adds `.specs/decisions/`, `CONTEXT-MAP.md` and every path whose basename is `CONTEXT.md`; STOP when `tasks.md` is missing, or `design.md` at Medium+; the Review context lists records whose `summary.md` row names the feature; native features drop `context.md` and the `STATE.md` decisions line, legacy features list `context.md` as a legacy decision source; a target that is a file path outside `.specs/features/` is a foreign plan: no validators, a note saying why, and a report path `.specs/reviews/<basename>-review-<n>.md`.
 
 ### Agents (changed)
 
-- `agents/spec-reviewer.md`: reads via `decisions.md`; adds the D-0001.20 checks.
+- `agents/spec-reviewer.md`: reads via `decisions.md`; adds the D-grill-in-spec-driven.20 checks; for a foreign plan, judges content only and writes the report under `.specs/reviews/`.
 - `agents/change-reviewer.md`: reads via `decisions.md`; adds the active-Decision and departure checks.
 
 ### Other skills (changed or removed)
 
 - `tdd`: description and intro become "the test-first loop spec-driven Execute runs per Task"; seams come from Scenarios and Design; ADR line becomes a `decisions.md` link.
 - `diagnosing-bugs`: Phase 5 becomes "hand off to a Small Specify"; ADR line becomes a `decisions.md` link.
+- `prototype`: rule 6 keeps the prototype on a throwaway branch, records the verdict, and hands it to Specify instead of folding it into the real code.
 - `improve-codebase-architecture` (+ `HTML-REPORT.md`, `agents/openai.yaml`): ADR conflicts become Decision conflicts; rejections are recorded in its Grilling Record.
 - `grill-with-docs` (+ `agents/openai.yaml`): description says it writes a Grilling Record and `CONTEXT.md`; for features, use spec-driven.
 - `setup-spec-driven`: renamed from `setup-matt-pocock-skills`; Section B (triage labels) and `triage-labels.md` removed; `domain.md` points at `.specs/decisions/`.
@@ -132,16 +143,18 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 
 ## Data Models
 
-### Grilling Record (`.specs/decisions/NNNN-slug.md`)
+### Grilling Record (`.specs/decisions/<slug>.md`)
 
 ```markdown
-# NNNN · <title>
-- **Date** · **Started from** · **Specs** · **Binds** · **Areas** · **Status**
+# <slug> · <title>
+- **Date** · **Started from** · **Specs** · **Binds** · **Areas** · **Status** (draft | active | retired)
 ## Context            (problem, forces, code facts with file:line, constraints, outside sources used)
-## Session path       (### Qn · question; Options; Recommended; Answer -> D-NNNN.k)
-## Decisions          (### D-NNNN.k · title; Choice; Reason; Trade-off; Binds · Decided by · Status)
+## Session path       (### Qn · question; Options; Recommended; Answer -> D-<slug>.k)
+                      (a review grill appends its own subsection; the Session path is never rewritten)
+## Decisions          (### D-<slug>.k · title; Choice; Reason; Trade-off; Binds · Decided by;
+                       Changed: <date> by <feature> (<source>): <what changed>   -- only once rewritten)
 ## Design             (feature records only, appended by Design)
-## Amendments         (appended when a Disposition changes a Decision)
+## Review             (Decisions added by a Spec or Change Review)
 ## Consequences
 ## Related
 ```
@@ -149,8 +162,25 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 ### `summary.md`
 
 ```markdown
-| File | Summary | Status | Binds | Areas | Specs |
-## Legacy decision paths   (one line per docs/adr/ or STATE.md Decisions that exists)
+| File | Date | Summary | Status | Binds | Areas | Specs |     (finished records only; sorted by Date, then File; Status active | retired)
+## Legacy decision sources   (one line per docs/adr/ or STATE.md Decisions that exists)
+```
+
+### Scenario proof type (in `spec.md`)
+
+~~~markdown
+   ```gherkin
+   Scenario: DEMO-01.S1 ...
+   ```
+
+   **Proof**: inspect        (or test; absent means test)
+~~~
+
+### `validation.md` inspect row
+
+```markdown
+| Scenario | Result | Evidence | Reason |
+| DEMO-01.S1 | PASS | skills/demo/SKILL.md:12 | the rule is stated as the Then step requires |
 ```
 
 ### `tasks.md` Tickets
@@ -162,7 +192,13 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 **Covers**: GRILL-05, GRILL-05.S1, ...
 **Blocked by**: none | K<n> (earlier only)
 **Tasks**: T1, T2, T3
-**Tracker**: <issue ID after publishing>
+**Tracker**: <issue ID, written right after the issue is created>
+
+### K7: Fix CR1                (fix Ticket: one per review or Verifier round)
+**Delivers**: fixes for CR1-F1, CR1-F2
+**Covers**: <repaired Scenario IDs>
+**Blocked by**: <the Tickets it repairs>
+**Tasks**: T32, T33
 ```
 
 ---
@@ -173,10 +209,17 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 | --- | --- | --- |
 | `fd` missing at runtime | agent stops and asks to install it | one extra step on a fresh machine |
 | `fd` missing at install | `install.sh` warns and continues | warning line in install output |
+| graphify missing | `prep_review.py` stops as today; the tests fail on purpose | install graphify |
 | harness cannot load a skill by name | Specify reads the sibling `SKILL.md` | none |
 | `tasks.md` or (Medium+) `design.md` missing at review | `prep_review.py` prints `STOP: ...`, exit 1 | `/spec-review` shows the STOP verbatim |
-| "publish tickets" with pending Dispositions | agent refuses, lists pending Findings | nothing published |
-| no `summary.md`, legacy `docs/adr/` present | read rule still checks legacy paths | none |
+| "publish tickets" with no Spec Review or pending Dispositions | agent refuses and says why | nothing published |
+| tracker call fails mid-publish | stop; IDs already written stay; report published and unpublished Tickets | say "publish tickets" again to resume |
+| `summary.md` row broken, file missing, or record without row | consumer warns and decides from record headers | warning; work continues |
+| slug already taken | agent picks another slug | none |
+| session ends mid-grill | the `draft` record holds every answer so far; the next Specify resumes it | none |
+| no `summary.md`, legacy `docs/adr/` present (root or per context) | read rule still checks legacy sources | none |
+| legacy plan | validators warn on the new rules; `context.md` read as legacy | warnings only |
+| foreign plan given to `/spec-review` | validators skipped with a note; report under `.specs/reviews/`; plan untouched | none |
 
 ---
 
@@ -185,10 +228,12 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 | Concern | Location (file:line) | Impact | Mitigation |
 | --- | --- | --- | --- |
 | Thin Grilling Records despite the template | `skills/domain-modeling/ADR-FORMAT.md:15` (the old cause) | lost "why" | explicit completeness prose in the new template; spec-reviewer Communication check (REV-05) |
-| Agent-behavior Scenarios not re-checked automatically | spec Success Criteria | regressions in prompts go unnoticed | UAT walkthrough recorded per Scenario in `validation.md` (D-0001.30) |
-| Four non-spec-driven skills depend on a sibling path | D-0001.33 | broken link if spec-driven is not installed | `install.sh` always installs spec-driven with the rest |
-| Installed old validator rejects this spec's new heading | `validate_spec.py:48` | one expected error until T2 lands | recorded in the spec's Assumptions table |
-| `install.sh` test could install graphify over the network | `install.sh:49-54` | slow or failing tests | tests put a stub `graphify` and stub `uv` on PATH |
+| `inspect` Scenarios not re-checked automatically | D-grill-in-spec-driven.42 | prompt regressions go unnoticed between Changes | the Verifier inspects every `inspect` Scenario on each Change that touches its files |
+| Inspection proves the text, not model obedience | D-grill-in-spec-driven.42 | a prompt can say the right thing and still be ignored | accepted trade-off; the reviewers still judge behavior |
+| Four non-spec-driven skills depend on a sibling path | D-grill-in-spec-driven.41 | broken link if spec-driven is not installed | `install.sh` always installs spec-driven with the rest |
+| Installed old validators reject this plan's new shape | `validate_spec.py:48`; `validate_scenarios.py` | expected errors until T2 and T4 land | per-Task gates pass only `test` IDs; recorded in the spec's Assumptions table |
+| `install.sh` test could install graphify over the network | `install.sh:49-54` | slow or failing tests | the test machine has graphify installed, so the install step is skipped; tests require it |
+| Rewriting Decisions in place hides what an older spec was built against | D-grill-in-spec-driven.15 | confusion when reading an old feature | the `Changed` line points to git history |
 
 ---
 
@@ -196,7 +241,17 @@ Specify (grill) → Design (Medium+) → Tasks + Tickets (always) → /spec-revi
 
 | Decision | See |
 | --- | --- |
-| Test strategy | [D-0001.30](../../decisions/0001-integrate-grill-into-spec-driven.md#d-000130--test-strategy-for-a-prompt-and-script-repository) |
-| Ticket markup | [D-0001.31](../../decisions/0001-integrate-grill-into-spec-driven.md#d-000131--ticket-markup-in-tasksmd) |
-| Mandatory plan files at review | [D-0001.32](../../decisions/0001-integrate-grill-into-spec-driven.md#d-000132--prep_reviewpy-gates-the-mandatory-plan-files) |
-| Home of the read rule | [D-0001.33](../../decisions/0001-integrate-grill-into-spec-driven.md#d-000133--one-home-for-the-read-rule-and-discovery) |
+| Test strategy | [D-grill-in-spec-driven.38](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven38--test-strategy-for-a-prompt-and-script-repository) |
+| Ticket markup | [D-grill-in-spec-driven.39](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven39--ticket-markup-in-tasksmd) |
+| Mandatory plan files at review | [D-grill-in-spec-driven.40](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven40--prep_reviewpy-gates-the-mandatory-plan-files) |
+| Home of the read rule | [D-grill-in-spec-driven.41](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven41--one-home-for-the-read-rule-and-discovery) |
+| Proof types | [D-grill-in-spec-driven.42](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven42--proof-types-test-and-inspect) |
+| Plan kinds | [D-grill-in-spec-driven.43](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven43--three-kinds-of-plan) |
+| Building from a foreign plan | [D-grill-in-spec-driven.44](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven44--building-from-a-foreign-plan) |
+| Fix Tickets | [D-grill-in-spec-driven.45](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven45--fix-tickets) |
+| `graphify-out/` kept | [D-grill-in-spec-driven.46](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven46--graphify-out-is-never-deleted) |
+| Rewrite in place | [D-grill-in-spec-driven.15](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven15--changed-decisions-are-rewritten-in-place) |
+| Review snapshot paths | [D-grill-in-spec-driven.33](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven33--review-snapshot-covers-decisions-and-every-glossary) |
+| Validator changes | [D-grill-in-spec-driven.34](../../decisions/grill-in-spec-driven.md#d-grill-in-spec-driven34--validator-changes) |
+
+Agent-decided details in this design (not separate Decisions): the `**Proof**:` line format and its default `test`; the `validation.md` inspect row columns; the foreign-plan report path `.specs/reviews/<basename>-review-<n>.md`; legacy detection in `validate_tasks.py` through the sibling `spec.md`.

@@ -8,78 +8,85 @@ Implement these tasks with the `spec-driven` skill: **activate it by name and fo
 
 **If the skill cannot be activated, STOP and tell the user - do not proceed without it.**
 
-**Note for this feature:** the installed spec-driven still follows the old rules (D-0001.27). Where the old skill and this plan disagree (Tickets, `Decisions & Assumptions`, no `context.md`), this plan wins; the tasks below implement the new rules.
+**Note for this feature:** the installed spec-driven still follows the old rules (D-grill-in-spec-driven.27). Where the old skill and this plan disagree (Tickets, `Decisions & Assumptions`, no `context.md`, `inspect` proofs, plan kinds), this plan wins; the tasks below implement the new rules. In particular, until T2 lands the per-Task Scenario gate passes only the Task's `test` Scenario IDs, and `inspect` Scenarios are left to the Verifier.
 
 ---
 
 **Spec**: `.specs/features/integrate-skills/spec.md`
 **Design**: `.specs/features/integrate-skills/design.md`
-**Grilling Record**: `.specs/decisions/0001-integrate-grill-into-spec-driven.md`
+**Grilling Record**: `.specs/decisions/grill-in-spec-driven.md`
+**Spec Review**: `.specs/features/integrate-skills/spec-review-1.md` (Dispositions applied)
 **Status**: Draft
 
 ---
 
 ## Test Coverage Matrix
 
-Provenance: no testing guidelines in the repo (no `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING*`, test config) and no existing tests (`find . -name 'test_*.py'` → none). Strong default applied, shaped by D-0001.30.
+Provenance: no testing guidelines in the repo (no `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING*`, test config) and no existing tests (`find . -name 'test_*.py'` → none). Strong default applied, shaped by D-grill-in-spec-driven.38 and D-grill-in-spec-driven.42.
 
-| Layer | Example paths | Test type | Coverage Expectation | Proven by |
-| --- | --- | --- | --- | --- |
-| Deterministic scripts | `skills/spec-driven/scripts/validate_spec.py`, `validate_tasks.py`, `prep_review.py` | integration (`unittest`, fixture repo in a temp dir, script run as a subprocess) | every automated Scenario of the script, 1:1 | `tests/test_*.py` |
-| Installer | `install.sh` | integration (`unittest`, temp `CLAUDE_CONFIG_DIR`/`OPENCODE_CONFIG_DIR`, stub `graphify`/`uv` on PATH) | every automated Scenario of the installer, 1:1 | `tests/test_install.py` |
-| Skill and agent prose | `skills/**/SKILL.md`, `skills/**/references/*.md`, `agents/*.md` | uat | every agent-behavior Scenario walked once by the Verifier and recorded in `validation.md` | `validation.md` UAT table |
+| Layer | Example paths | Test type | Proof type | Coverage Expectation | Proven by |
+| --- | --- | --- | --- | --- | --- |
+| Deterministic scripts | `skills/spec-driven/scripts/validate_spec.py`, `validate_tasks.py`, `validate_scenarios.py`, `prep_review.py` | integration (`unittest`, fixture repo in a temp dir, script run as a subprocess, real `graphify` on PATH) | test | every `test` Scenario of the script, 1:1 | `tests/test_*.py` |
+| Installer | `install.sh` | integration (`unittest`, temp `CLAUDE_CONFIG_DIR`/`OPENCODE_CONFIG_DIR`, real `graphify` on PATH) | test, except the missing-`fd` warning (inspect) | every `test` Scenario of the installer, 1:1 | `tests/test_install.py` |
+| Skill and agent prose | `skills/**/SKILL.md`, `skills/**/references/*.md`, `agents/*.md` | inspect | inspect | every `inspect` Scenario checked once by the Verifier against the final files | `validation.md` inspect rows (ID, PASS/FAIL, `file:line`, reason) |
 
 ## Gate Check Commands
 
 | Gate | Command | Used by |
 | --- | --- | --- |
 | quick | `python3 -m unittest discover -s tests -v` | script and installer tasks |
-| scenarios | `python3 skills/spec-driven/scripts/validate_scenarios.py integrate-skills --root . --only <the task's Scenario IDs>` | script and installer tasks |
+| scenarios | `python3 skills/spec-driven/scripts/validate_scenarios.py integrate-skills --root . --only <the task's test Scenario IDs> --since HEAD` | tasks that claim `test` Scenarios; never pass `inspect` IDs |
 | build | `bash -n install.sh && node --check render-adapters.js && python3 -m py_compile skills/spec-driven/scripts/*.py` | every task |
-| plan | `python3 skills/spec-driven/scripts/validate_spec.py integrate-skills --root . && python3 skills/spec-driven/scripts/validate_tasks.py integrate-skills --root .` | every task after T3 |
-| full | quick + build + plan | prose tasks (regression only; behavior is proven by UAT) |
+| plan | `python3 skills/spec-driven/scripts/validate_spec.py integrate-skills --root . && python3 skills/spec-driven/scripts/validate_tasks.py integrate-skills --root .` | every task after T6 |
+| full | quick + build + plan (plan only after T6) | prose tasks (regression only; behavior is proven by inspection) |
 
-Before T2 lands, `validate_spec.py` reports one expected error on this spec (the renamed section). Before T3 lands, `validate_tasks.py` ignores the Tickets section.
+Before T4 lands, `validate_spec.py` reports one expected error on this spec (the renamed section). Before T6 lands, `validate_tasks.py` ignores the Tickets section. Before T2 lands, `validate_scenarios.py` without `--only` fails every `inspect` Scenario.
 
 ---
 
 ## Tickets
 
-### K1: Validators understand the new plan shape
-**Delivers**: `validate_spec.py` accepts and requires "Decisions & Assumptions" at every scope; `validate_tasks.py` checks Tickets. This plan then passes both gates.
-**Covers**: GRILL-05, GRILL-06, TKT-03, TKT-04, TKT-05 · GRILL-05.S1, GRILL-05.S2, GRILL-06.S1, TKT-03.S1, TKT-04.S1, TKT-05.S1
+### K1: Gates accept inspect proofs
+**Delivers**: a Scenario marked `**Proof**: inspect` passes `validate_scenarios.py` when `validation.md` has a PASS row for it; Execute and the Verifier know which Scenarios each one checks.
+**Covers**: PROOF-01, PROOF-02 · PROOF-01.S1, PROOF-01.S2, PROOF-01.S3, PROOF-02.S1
 **Blocked by**: none
 **Tasks**: T1, T2, T3
 
-### K2: Review prep and installer follow the new rules
-**Delivers**: `/spec-review` snapshots records and the glossary, lists the feature's Grilling Records, and stops on missing plan files; `install.sh` removes retired skills and warns about `fd`.
-**Covers**: REV-01, REV-02, TKT-01, TKT-02, FLOW-01, READ-04 · REV-01.S1, REV-02.S1, TKT-01.S1, TKT-02.S1, TKT-02.S2, FLOW-01.S1, READ-04.S1
+### K2: Validators understand the new plan shape
+**Delivers**: `validate_spec.py` requires "Decisions & Assumptions" in native specs and checks its two tables by header; `validate_tasks.py` checks Tickets; legacy plans only get warnings. This plan then passes both gates.
+**Covers**: GRILL-05, GRILL-06, GRILL-09, PLAN-01, TKT-03, TKT-04, TKT-05, PLAN-02 · GRILL-05.S1, GRILL-05.S2, GRILL-06.S1, GRILL-09.S1, GRILL-09.S2, PLAN-01.S1, TKT-03.S1, TKT-03.S2, TKT-04.S1, TKT-05.S1, PLAN-02.S1
 **Blocked by**: K1
-**Tasks**: T4, T5, T6
+**Tasks**: T4, T5, T6, T7
 
-### K3: Grill, record and read rule exist as skills
-**Delivers**: vendored `grilling`, the Grilling Record and `summary.md` formats in domain-modeling, the shared read rule with `fd` discovery, and `setup-spec-driven`.
-**Covers**: GRILL-01, GRILL-02, GRILL-03, REC-01, REC-02, REC-03, REC-04, REC-07, READ-01, READ-02, READ-03, EDGE-01, FLOW-02 · GRILL-01.S1, GRILL-02.S1, GRILL-03.S1, REC-01.S1, REC-02.S1, REC-03.S1, REC-04.S1, REC-07.S1, READ-01.S1, READ-02.S1, READ-03.S1, EDGE-01.S1, FLOW-02.S1
+### K3: Review prep and installer follow the new rules
+**Delivers**: `/spec-review` snapshots records and every glossary, lists the feature's records (or a legacy `context.md`), stops on missing plan files, and reviews a teammate's foreign plan without touching it; `install.sh` removes retired skills and warns about `fd`.
+**Covers**: REV-01, REV-02, TKT-01, TKT-02, PLAN-04, FLOW-01, READ-04 · REV-01.S1, REV-01.S2, REV-02.S1, REV-02.S2, TKT-01.S1, TKT-02.S1, TKT-02.S2, PLAN-04.S1, FLOW-01.S1, READ-04.S1
 **Blocked by**: K2
-**Tasks**: T7, T8, T9, T10
+**Tasks**: T8, T9, T10, T11
 
-### K4: spec-driven plans the new way
-**Delivers**: Specify grills, Design writes into the record at Medium+, Tasks always produces day-sized Tickets, and Tickets can be published on a go-ahead.
-**Covers**: GRILL-04, GRILL-07, GRILL-08, EDGE-02, REC-06, REC-08, TKT-06, TKT-07, TKT-08 · GRILL-04.S1, GRILL-07.S1, GRILL-08.S1, EDGE-02.S1, REC-06.S1, REC-08.S1, TKT-06.S1, TKT-07.S1, TKT-08.S1
+### K4: Specify grills and writes a Grilling Record
+**Delivers**: a user can run Specify and be grilled one question at a time; the agent writes a draft record as it goes, resumes it after an interruption, reads Decisions through the shared read rule, and writes a native spec, including from a teammate's foreign plan. `setup-spec-driven` and `grilling` install.
+**Covers**: GRILL-01, GRILL-02, GRILL-03, GRILL-04, GRILL-07, GRILL-08, GRILL-10, REC-01, REC-02, REC-03, REC-04, REC-07, REC-10, READ-02, READ-03, READ-05, EDGE-02, PLAN-05, FLOW-02 · GRILL-01.S1, GRILL-02.S1, GRILL-03.S1, GRILL-04.S1, GRILL-07.S1, GRILL-08.S1, GRILL-10.S1, REC-01.S1, REC-01.S2, REC-02.S1, REC-03.S1, REC-04.S1, REC-07.S1, REC-10.S1, READ-02.S1, READ-03.S1, READ-05.S1, EDGE-02.S1, PLAN-05.S1, FLOW-02.S1
 **Blocked by**: K3
-**Tasks**: T11, T12, T13, T14, T15, T16
+**Tasks**: T12, T13, T14, T15, T16
 
-### K5: Execute and reviews use the records
-**Delivers**: Execute runs the tdd loop and leaves `/code-review` to the human; Dispositions write Amendments; both reviewers check against the records.
-**Covers**: FLOW-03, FLOW-05, REC-05, REV-03, REV-04, REV-05, REV-06 · FLOW-03.S1, FLOW-05.S1, REC-05.S1, REV-03.S1, REV-04.S1, REV-05.S1, REV-06.S1
+### K5: Design, Tasks and Tickets follow the records
+**Delivers**: Design writes into the record at Medium+, Tasks always produces day-sized Tickets, Tickets publish safely on a go-ahead, and the skill entry point keeps `graphify-out/`.
+**Covers**: REC-06, REC-08, TKT-08, TKT-06, TKT-07, READ-06 · REC-06.S1, REC-08.S1, TKT-08.S1, TKT-06.S1, TKT-06.S2, TKT-06.S3, TKT-07.S1, TKT-07.S2, READ-06.S1
 **Blocked by**: K4
 **Tasks**: T17, T18, T19, T20, T21
 
-### K6: No side doors, no leftovers
-**Delivers**: diagnosing-bugs hands off, grill-with-docs and improve-codebase-architecture write records, retired skills are gone, and the README describes the new flow.
-**Covers**: FLOW-04, REC-09 · FLOW-04.S1, REC-09.S1
+### K6: Execute and reviews use the records
+**Delivers**: Execute runs the tdd loop, reads legacy and per-context decisions, puts fixes in fix Tickets, and leaves `/code-review` to the human; Dispositions rewrite Decisions in place; both reviewers check against the records.
+**Covers**: FLOW-05, TKT-09, FLOW-03, READ-01, EDGE-01, PLAN-03, REC-05, REV-03, REV-04, REV-05, REV-06 · FLOW-05.S1, TKT-09.S1, TKT-09.S2, FLOW-03.S1, READ-01.S1, EDGE-01.S1, EDGE-01.S2, EDGE-01.S3, PLAN-03.S1, REC-05.S1, REC-05.S2, REC-05.S3, REV-03.S1, REV-04.S1, REV-05.S1, REV-05.S2, REV-06.S1
 **Blocked by**: K5
-**Tasks**: T22, T23, T24, T25
+**Tasks**: T22, T23, T24, T25, T26
+
+### K7: No side doors, no leftovers
+**Delivers**: diagnosing-bugs and prototype hand off to Specify, grill-with-docs and improve-codebase-architecture write records, retired skills are gone, and the README describes the new flow.
+**Covers**: FLOW-04, FLOW-06, REC-09 · FLOW-04.S1, FLOW-06.S1, REC-09.S1
+**Blocked by**: K6
+**Tasks**: T27, T28, T29, T30, T31
 
 ---
 
@@ -87,55 +94,61 @@ Before T2 lands, `validate_spec.py` reports one expected error on this spec (the
 
 Each phase is one Ticket. Phases run in order; tasks within a phase run in order.
 
-### Phase 1: K1 Validators
+### Phase 1: K1 Inspect proofs
 
 ```
 T1 → T2 → T3
 ```
 
-### Phase 2: K2 Review prep and installer
+### Phase 2: K2 Validators
 
 ```
-T4 → T5 → T6
+T4 → T5 → T6 → T7
 ```
 
-### Phase 3: K3 Grill, record and read rule
+### Phase 3: K3 Review prep and installer
 
 ```
-T7 → T8 → T9 → T10
+T8 → T9 → T10 → T11
 ```
 
-### Phase 4: K4 Planning phases
+### Phase 4: K4 Specify
 
 ```
-T11 → T12 → T13 → T14 → T15 → T16
+T12 → T13 → T14 → T15 → T16
 ```
 
-### Phase 5: K5 Execute and reviews
+### Phase 5: K5 Design, Tasks and Tickets
 
 ```
 T17 → T18 → T19 → T20 → T21
 ```
 
-### Phase 6: K6 Side doors and cleanup
+### Phase 6: K6 Execute and reviews
 
 ```
-T22 → T23 → T24 → T25
+T22 → T23 → T24 → T25 → T26
+```
+
+### Phase 7: K7 Side doors and cleanup
+
+```
+T27 → T28 → T29 → T30 → T31
 ```
 
 ---
 
 ## Task Breakdown
 
-### Phase 1: K1 Validators
+### Phase 1: K1 Inspect proofs
 
 #### T1: Add the fixture-repository test helper
 
-**What**: `tests/fixtures.py` with a helper that builds a throwaway git repository in a temp dir (spec, tasks, design, records, summary) and runs a script as a subprocess, returning exit code and output.
+**What**: `tests/fixtures.py` with a helper that builds a throwaway git repository in a temp dir (spec, tasks, design, records, summary, validation.md, glossaries) and runs a script as a subprocess, returning exit code and output. It requires the real `graphify` on PATH and fails with a clear message when it is missing.
 **Where**: `tests/fixtures.py`
 **Depends on**: None
 **Reuses**: fixture layout used to smoke-test the scripts in the previous feature (scratch repo with `.specs/features/<f>/`)
-**Requirement**: GRILL-05, TKT-01 (infrastructure for their tests)
+**Requirement**: PROOF-01, GRILL-05, TKT-01 (infrastructure for their tests)
 
 **Done when**:
 - [ ] `python3 -c "import sys; sys.path.insert(0, 'tests'); import fixtures"` succeeds
@@ -149,75 +162,158 @@ T22 → T23 → T24 → T25
 
 ---
 
-#### T2: Rename and require "Decisions & Assumptions" in validate_spec.py
+#### T2: Accept inspect proofs in validate_scenarios.py
 
-**What**: replace "Assumptions & Open Questions" with "Decisions & Assumptions" in both required-section lists, read the new table (Choice and Rationale cells filled), accept a section whose body is `none`.
-**Where**: `skills/spec-driven/scripts/validate_spec.py` (tests in `tests/test_validate_spec.py`)
+**What**: `scenarios_lib.parse_spec` reads an optional `**Proof**: test|inspect` line after each Scenario's closing fence (default `test`). `validate_scenarios.py` treats a PASS row in `.specs/features/<f>/validation.md` (first cell the Scenario ID, second cell `PASS`) as the proof of an `inspect` Scenario, and reports a missing row or a FAIL row as an error naming the Scenario.
+**Where**: `skills/spec-driven/scripts/validate_scenarios.py`, `skills/spec-driven/scripts/scenarios_lib.py` (tests in `tests/test_validate_scenarios.py`)
 **Depends on**: T1
-**Reuses**: `section_bounds`, `split_row`, `REQUIRED_SECTIONS` in the same file
-**Requirement**: GRILL-05, GRILL-06
+**Reuses**: `parse_spec`, the missing-test check and error reporting in `validate_scenarios.py`
+**Requirement**: PROOF-01
 
 **Done when**:
 - [ ] the three Scenario tests pass and carry their Scenario text verbatim
+- [ ] a spec with no `**Proof**:` lines behaves exactly as before (every Scenario needs a test)
+- [ ] Gate check passes: quick, scenarios, build
+
+**Tests**: integration
+**Scenarios**: PROOF-01.S1, PROOF-01.S2, PROOF-01.S3
+**Gate**: quick
+
+**Commit**: `feat(spec-driven): accept Verifier inspection rows as proof for inspect Scenarios`
+
+---
+
+#### T3: Execute and the Verifier handle inspect Scenarios
+
+**What**: `implement.md` step 5.3 passes only the Task's `test` Scenario IDs to `validate_scenarios.py --only`; `validate.md` §2 tells the Verifier to check every `inspect` Scenario against the final files and write one `validation.md` row each (ID, PASS or FAIL, `file:line`, one-sentence reason; IaC may cite command output) before running `validate_scenarios.py` on all Scenarios. The existing interactive UAT step for user-facing features stays; it is not a proof type.
+**Where**: `skills/spec-driven/references/implement.md`, `skills/spec-driven/references/validate.md`
+**Depends on**: T2
+**Reuses**: current step 5 and §2 text
+**Requirement**: PROOF-02
+
+**Done when**:
+- [ ] neither file tells an agent to fail a Scenario only because it has no test when its proof type is `inspect`
+- [ ] Gate check passes: full (plan excluded until T6)
+
+**Tests**: inspect
+**Scenarios**: PROOF-02.S1
+**Gate**: full
+
+**Commit**: `feat(spec-driven): check inspect Scenarios once in the Verifier`
+
+---
+
+### Phase 2: K2 Validators
+
+#### T4: Rename and require "Decisions & Assumptions" in validate_spec.py
+
+**What**: replace "Assumptions & Open Questions" with "Decisions & Assumptions" in both required-section lists; accept a section whose body is `none`; find the Decisions table by its `ID` and `Choice` headers and the Assumptions table by its `Assumption` and `Chosen default` headers; error on an empty Choice or Rationale, or an empty Chosen default or Rationale, naming the row's first cell.
+**Where**: `skills/spec-driven/scripts/validate_spec.py` (tests in `tests/test_validate_spec.py`)
+**Depends on**: T3
+**Reuses**: `section_bounds`, `split_row`, `REQUIRED_SECTIONS` and the assumptions check at `validate_spec.py:197-217`
+**Requirement**: GRILL-05, GRILL-06, GRILL-09
+
+**Done when**:
+- [ ] the five Scenario tests pass and carry their Scenario text verbatim
 - [ ] `validate_spec.py integrate-skills` exits 0 on this feature
 - [ ] Gate check passes: quick, scenarios, build
 
 **Tests**: integration
-**Scenarios**: GRILL-05.S1, GRILL-05.S2, GRILL-06.S1
+**Scenarios**: GRILL-05.S1, GRILL-05.S2, GRILL-06.S1, GRILL-09.S1, GRILL-09.S2
 **Gate**: quick
 
-**Commit**: `feat(spec-driven): require Decisions & Assumptions in every spec`
+**Commit**: `feat(spec-driven): require Decisions & Assumptions and check its tables by header`
 
 ---
 
-#### T3: Check Tickets in validate_tasks.py
+#### T5: Legacy specs only warn in validate_spec.py
 
-**What**: add `Tickets` to the required sections and a Ticket pass: parse `### K<n>:` blocks and their `**Tasks**` and `**Blocked by**` fields; error when a task is in no Ticket, in more than one, or when Blocked by names a later Ticket.
+**What**: a spec with no `**Grilling Record**:` line is legacy; for it, a missing "Decisions & Assumptions" section is a warning, and the old "Assumptions & Open Questions" table is still checked as before.
+**Where**: `skills/spec-driven/scripts/validate_spec.py` (tests in `tests/test_validate_spec.py`)
+**Depends on**: T4
+**Reuses**: the warning reporting in `validate_spec.py`
+**Requirement**: PLAN-01
+
+**Done when**:
+- [ ] the Scenario test passes
+- [ ] Gate check passes: quick, scenarios, build
+
+**Tests**: integration
+**Scenarios**: PLAN-01.S1
+**Gate**: quick
+
+**Commit**: `feat(spec-driven): accept legacy specs with warnings`
+
+---
+
+#### T6: Check Tickets in validate_tasks.py
+
+**What**: add `Tickets` to the required sections and a Ticket pass: parse `### K<n>:` blocks and their `**Tasks**` and `**Blocked by**` fields; error when a task is in no Ticket, in more than one, or when Blocked by names a later Ticket. Fix Tickets and fix tasks with a `**Fixes**` field are ordinary Tickets and tasks.
 **Where**: `skills/spec-driven/scripts/validate_tasks.py` (tests in `tests/test_validate_tasks.py`)
-**Depends on**: T2
+**Depends on**: T5
 **Reuses**: `parse_tasks`, `TASK_RE`, the error/warning reporting in `check`
 **Requirement**: TKT-03, TKT-04, TKT-05
 
 **Done when**:
-- [ ] the three Scenario tests pass
+- [ ] the four Scenario tests pass
 - [ ] `validate_tasks.py integrate-skills` exits 0 on this file
 - [ ] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
-**Scenarios**: TKT-03.S1, TKT-04.S1, TKT-05.S1
+**Scenarios**: TKT-03.S1, TKT-03.S2, TKT-04.S1, TKT-05.S1
 **Gate**: quick
 
 **Commit**: `feat(spec-driven): check Ticket membership and blocking order in tasks.md`
 
 ---
 
-### Phase 2: K2 Review prep and installer
+#### T7: Legacy task plans only warn in validate_tasks.py
 
-#### T4: Snapshot records and glossary; list the feature's records in prep_review.py
+**What**: when the `spec.md` beside `tasks.md` has no `**Grilling Record**:` line, a missing `## Tickets` section and tasks outside Tickets are warnings.
+**Where**: `skills/spec-driven/scripts/validate_tasks.py` (tests in `tests/test_validate_tasks.py`)
+**Depends on**: T6
+**Reuses**: the Ticket pass from T6
+**Requirement**: PLAN-02
 
-**What**: add `.specs/decisions/` and `CONTEXT.md` to the plan paths the pre-review commit protects; read `summary.md` and list records whose Specs names the feature; drop `context.md` and the `STATE.md` decisions line from the Review context.
+**Done when**:
+- [ ] the Scenario test passes
+- [ ] Gate check passes: quick, scenarios, build, plan
+
+**Tests**: integration
+**Scenarios**: PLAN-02.S1
+**Gate**: quick
+
+**Commit**: `feat(spec-driven): accept legacy task plans with warnings`
+
+---
+
+### Phase 3: K3 Review prep and installer
+
+#### T8: Snapshot records and every glossary; list the feature's records in prep_review.py
+
+**What**: add `.specs/decisions/`, `CONTEXT-MAP.md` and every path whose basename is `CONTEXT.md` to the plan paths the pre-review commit protects; read `summary.md` and list records whose Specs names the feature; for a native feature drop `context.md` and the `STATE.md` decisions line from the Review context; for a legacy feature list `context.md` as a legacy decision source.
 **Where**: `skills/spec-driven/scripts/prep_review.py` (tests in `tests/test_prep_review.py`)
-**Depends on**: T3
+**Depends on**: T7
 **Reuses**: `prep_spec`, `dirty_paths`, `must_git`
 **Requirement**: REV-01, REV-02
 
 **Done when**:
-- [ ] both Scenario tests pass
+- [ ] the four Scenario tests pass with the real `graphify`
 - [ ] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
-**Scenarios**: REV-01.S1, REV-02.S1
+**Scenarios**: REV-01.S1, REV-01.S2, REV-02.S1, REV-02.S2
 **Gate**: quick
 
-**Commit**: `feat(spec-driven): snapshot Grilling Records and glossary before spec review`
+**Commit**: `feat(spec-driven): snapshot Grilling Records and glossaries before spec review`
 
 ---
 
-#### T5: Stop review prep on missing plan files
+#### T9: Stop review prep on missing plan files
 
 **What**: in `prep_spec`, raise `Stop` when `tasks.md` is missing at any scope, or `design.md` is missing at Medium, Large or Complex.
 **Where**: `skills/spec-driven/scripts/prep_review.py` (tests in `tests/test_prep_review.py`)
-**Depends on**: T4
+**Depends on**: T8
 **Reuses**: `spec_scope` from `scenarios_lib.py`; the existing `Stop` exception
 **Requirement**: TKT-01, TKT-02
 
@@ -233,16 +329,37 @@ T22 → T23 → T24 → T25
 
 ---
 
-#### T6: Retire skills and warn about fd in install.sh
+#### T10: Review a foreign plan in prep_review.py
+
+**What**: when the target is a file path outside `.specs/features/`, treat it as a foreign plan: skip the structural validators with a note saying why, name the report path `.specs/reviews/<basename>-review-<n>.md`, and never write to the plan file.
+**Where**: `skills/spec-driven/scripts/prep_review.py` (tests in `tests/test_prep_review.py`)
+**Depends on**: T9
+**Reuses**: `prep_spec` argument handling and the Review context printer
+**Requirement**: PLAN-04
+
+**Done when**:
+- [ ] the Scenario test passes
+- [ ] Gate check passes: quick, scenarios, build, plan
+
+**Tests**: integration
+**Scenarios**: PLAN-04.S1
+**Gate**: quick
+
+**Commit**: `feat(spec-driven): review foreign plans without validating or editing them`
+
+---
+
+#### T11: Retire skills and warn about fd in install.sh
 
 **What**: extend `RETIRED_SKILLS` with `ask-matt implement to-spec to-tickets triage wayfinder setup-matt-pocock-skills`; print a warning when `fd` is not on PATH and continue.
 **Where**: `install.sh` (tests in `tests/test_install.py`)
-**Depends on**: T5
+**Depends on**: T10
 **Reuses**: the `RETIRED_SKILLS` removal loop at `install.sh:24-28`; the graphify presence check style at `install.sh:50`
 **Requirement**: FLOW-01, READ-04
 
 **Done when**:
-- [ ] both Scenario tests pass, with stub `graphify` and `uv` on PATH and temp config dirs
+- [ ] the FLOW-01 test passes with temp config dirs and the real `graphify`
+- [ ] the fd check prints a warning naming `fd` and does not exit
 - [ ] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
@@ -253,74 +370,74 @@ T22 → T23 → T24 → T25
 
 ---
 
-### Phase 3: K3 Grill, record and read rule
+### Phase 4: K4 Specify
 
-#### T7: Vendor and extend the grilling skill
+#### T12: Vendor and extend the grilling skill
 
 **What**: copy the synced `grilling` text into the repo and add the "you decide" and "decide the rest" escapes and the Binds-in-recommendation rule; add `agents/openai.yaml`.
 **Where**: `skills/grilling/SKILL.md`
-**Depends on**: T6
+**Depends on**: T11
 **Reuses**: `~/.claude/skills/synced/*/grilling/SKILL.md`; `skills/grill-with-docs/agents/openai.yaml` as the yaml pattern
-**Requirement**: GRILL-01, GRILL-02, GRILL-03
+**Requirement**: GRILL-01, GRILL-02, GRILL-03 (support file; proven through Specify in T16)
 
 **Done when**:
 - [ ] the skill states one question per turn with options and a recommendation, both escapes, and Binds in the recommendation
 - [ ] Gate check passes: full
 
-**Tests**: uat
-**Scenarios**: GRILL-01.S1, GRILL-02.S1, GRILL-03.S1
+**Tests**: none (support file; its Scenarios are claimed by T16, which wires it into Specify)
+**Scenarios**: none - this task writes no tests
 **Gate**: full
 
 **Commit**: `feat(grilling): vendor the grilling skill with decision escapes`
 
 ---
 
-#### T8: Grilling Record and summary formats in domain-modeling
+#### T13: Grilling Record and summary formats in domain-modeling
 
-**What**: replace `ADR-FORMAT.md` with `GRILLING-RECORD-FORMAT.md` (record and `summary.md` templates, completeness rules in prose, numbering, incremental writing, legacy lines, Amendments and Design sections); rewrite `SKILL.md` to write records instead of offering ADRs.
+**What**: replace `ADR-FORMAT.md` with `GRILLING-RECORD-FORMAT.md` (record and `summary.md` templates; completeness rules in prose; one choice per Decision; slug names unique in the folder; `draft` status and resume; incremental writing; rewrite in place with a `Changed` line; `## Design` and `## Review` sections; the Date column and sorting; legacy lines); rewrite `SKILL.md` to write records instead of offering ADRs.
 **Where**: `skills/domain-modeling/GRILLING-RECORD-FORMAT.md`, `skills/domain-modeling/SKILL.md`, `skills/domain-modeling/ADR-FORMAT.md` (deleted)
-**Depends on**: T7
-**Reuses**: `.specs/decisions/0001-integrate-grill-into-spec-driven.md` and `summary.md` as the worked example
-**Requirement**: REC-01, REC-02, REC-03, REC-04, REC-07
+**Depends on**: T12
+**Reuses**: `.specs/decisions/grill-in-spec-driven.md` and `summary.md` as the worked example
+**Requirement**: REC-01, REC-03, REC-04, REC-05 (support file; proven through Specify in T16 and review.md in T24)
 
 **Done when**:
-- [ ] no file in `skills/domain-modeling/` tells the agent to write an ADR
+- [ ] no file in `skills/domain-modeling/` tells the agent to write an ADR or mark a Decision superseded
 - [ ] the template marks every section required and says a record covers the whole session
 - [ ] Gate check passes: full
 
-**Tests**: uat
-**Scenarios**: REC-01.S1, REC-02.S1, REC-03.S1, REC-04.S1, REC-07.S1
+**Tests**: none (support file; its Scenarios are claimed by T16 and T24)
+**Scenarios**: none - this task writes no tests
 **Gate**: full
 
 **Commit**: `feat(domain-modeling): replace ADRs with complete Grilling Records`
 
 ---
 
-#### T9: Write the shared read rule and discovery reference
+#### T14: Write the shared read rule and discovery reference
 
-**What**: `references/decisions.md` with discovery (two `fd` commands, stop-and-ask when `fd` is missing), the `summary.md` row filter, the legacy check, the Binds test, and "cite outside sources used".
+**What**: `references/decisions.md` with discovery (two `fd` commands, stop-and-ask when `fd` is missing), the `summary.md` row filter (`active` only), the header fallback for a broken index, the legacy sources (root and per-context `docs/adr/`, `STATE.md`, legacy `context.md`), the three plan kinds, the Binds test, and "cite outside sources used".
 **Where**: `skills/spec-driven/references/decisions.md`
-**Depends on**: T8
-**Reuses**: D-0001.17, D-0001.18, D-0001.19 text from the Grilling Record
-**Requirement**: READ-01, READ-02, READ-03, EDGE-01
+**Depends on**: T13
+**Reuses**: D-grill-in-spec-driven.17, .18, .19 and .43 text from the Grilling Record; `skills/setup-matt-pocock-skills/domain.md:9`
+**Requirement**: READ-01, READ-02, READ-03, READ-05, EDGE-01 (support file; proven through its consumers in T16 and T23)
 
 **Done when**:
-- [ ] the file holds the exact fd commands from D-0001.18 and the filter from D-0001.17
+- [ ] the file holds the exact fd commands from D-grill-in-spec-driven.18, the `docs/adr` probe, and the filter from D-grill-in-spec-driven.17
 - [ ] Gate check passes: full
 
-**Tests**: uat
-**Scenarios**: READ-01.S1, READ-02.S1, READ-03.S1, EDGE-01.S1
+**Tests**: none (support file; its Scenarios are claimed by T16 and T23)
+**Scenarios**: none - this task writes no tests
 **Gate**: full
 
 **Commit**: `feat(spec-driven): add the shared Decision read rule and repo discovery`
 
 ---
 
-#### T10: Rename setup-matt-pocock-skills to setup-spec-driven
+#### T15: Rename setup-matt-pocock-skills to setup-spec-driven
 
 **What**: `git mv` the directory; drop Section B and `triage-labels.md`; point the domain docs section and `domain.md` at `.specs/decisions/`; rewrite names and descriptions; add an `install.sh` test for the new skills.
 **Where**: `skills/setup-spec-driven/` (tests in `tests/test_install.py`)
-**Depends on**: T9
+**Depends on**: T14
 **Reuses**: `skills/setup-matt-pocock-skills/` contents
 **Requirement**: FLOW-02
 
@@ -337,33 +454,33 @@ T22 → T23 → T24 → T25
 
 ---
 
-### Phase 4: K4 Planning phases
+#### T16: Specify runs the grill
 
-#### T11: Specify runs the grill
-
-**What**: rewrite `specify.md` steps 1-2: pre-question steps (lessons, `decisions.md`, capability search, Standards), call `grilling` and `domain-modeling` by name with the sibling-path fallback, dimensions sweep as closing branches, incremental record, spec written after shared understanding; update both templates (Decisions & Assumptions table, Deferred Ideas in Out of Scope, optional References); continue an existing non-feature record when one exists; delete `discuss.md`.
+**What**: rewrite `specify.md` steps 1-2: pre-question steps (lessons, `decisions.md`, capability search, Standards); call `grilling` and `domain-modeling` by name with the sibling-path fallback; create the draft record at the first answer and resume a draft found for the feature; dimensions sweep as closing branches; spec written after shared understanding; update both templates (`**Grilling Record**:` line, `**Proof**:` line per Scenario, Decisions & Assumptions table, Deferred Ideas in Out of Scope, optional References); continue an existing non-feature record when one exists; take a foreign plan as input and link it; delete `discuss.md`.
 **Where**: `skills/spec-driven/references/specify.md`, `skills/spec-driven/references/discuss.md` (deleted)
-**Depends on**: T10
+**Depends on**: T15
 **Reuses**: current `specify.md` steps 3-4 (EARS, Scenarios, closure gate) unchanged
-**Requirement**: GRILL-04, GRILL-07, GRILL-08, EDGE-02
+**Requirement**: GRILL-01, GRILL-02, GRILL-03, GRILL-04, GRILL-07, GRILL-08, GRILL-10, REC-01, REC-02, REC-03, REC-04, REC-07, REC-10, READ-02, READ-03, READ-05, EDGE-02, PLAN-05
 
 **Done when**:
-- [ ] no reference in `skills/spec-driven/` points at `discuss.md` or `context.md`
+- [ ] no reference in `skills/spec-driven/` points at `discuss.md` or tells an agent to write `context.md`
 - [ ] Gate check passes: full
 
-**Tests**: uat
-**Scenarios**: GRILL-04.S1, GRILL-07.S1, GRILL-08.S1, EDGE-02.S1
+**Tests**: inspect
+**Scenarios**: GRILL-01.S1, GRILL-02.S1, GRILL-03.S1, GRILL-04.S1, GRILL-07.S1, GRILL-08.S1, GRILL-10.S1, REC-01.S1, REC-01.S2, REC-02.S1, REC-03.S1, REC-04.S1, REC-07.S1, REC-10.S1, READ-02.S1, READ-03.S1, READ-05.S1, EDGE-02.S1, PLAN-05.S1
 **Gate**: full
 
 **Commit**: `feat(spec-driven): Specify grills and writes a Grilling Record`
 
 ---
 
-#### T12: Design writes into the Grilling Record
+### Phase 5: K5 Design, Tasks and Tickets
 
-**What**: Design is required at Medium+; it reads via `decisions.md`; asks grill-style questions; appends a `## Design` section; Tech Decisions become links; the supersede flow goes through records instead of `AD-NNN`.
+#### T17: Design writes into the Grilling Record
+
+**What**: Design is required at Medium+; it reads via `decisions.md`; asks grill-style questions; appends a `## Design` section; Tech Decisions become links; changing another record's Decision rewrites it there instead of writing `AD-NNN`.
 **Where**: `skills/spec-driven/references/design.md`
-**Depends on**: T11
+**Depends on**: T16
 **Reuses**: current template sections (reuse table, components, risks)
 **Requirement**: REC-06, REC-08
 
@@ -371,7 +488,7 @@ T22 → T23 → T24 → T25
 - [ ] no instruction in `design.md` writes to `STATE.md` or `docs/adr/`
 - [ ] Gate check passes: full
 
-**Tests**: uat
+**Tests**: inspect
 **Scenarios**: REC-06.S1, REC-08.S1
 **Gate**: full
 
@@ -379,11 +496,11 @@ T22 → T23 → T24 → T25
 
 ---
 
-#### T13: Tasks always runs and slices Tickets first
+#### T18: Tasks always runs and slices Tickets first
 
-**What**: remove the skip rule; slice the Spec into Tickets (D-0001.23, markup D-0001.31) before cutting Tasks; document the `## Tickets` section in the template and the Ticket checks in step 5.
+**What**: remove the skip rule; slice the Spec into Tickets (D-grill-in-spec-driven.23, markup D-grill-in-spec-driven.39) before cutting Tasks; add the Proof type column to the Test Coverage Matrix template; document the `## Tickets` section in the template and the Ticket checks in step 5.
 **Where**: `skills/spec-driven/references/tasks.md`
-**Depends on**: T12
+**Depends on**: T17
 **Reuses**: current Tasks process and template
 **Requirement**: TKT-08
 
@@ -391,7 +508,7 @@ T22 → T23 → T24 → T25
 - [ ] the template's Tickets section matches what `validate_tasks.py` checks
 - [ ] Gate check passes: full
 
-**Tests**: uat
+**Tests**: inspect
 **Scenarios**: TKT-08.S1
 **Gate**: full
 
@@ -399,59 +516,60 @@ T22 → T23 → T24 → T25
 
 ---
 
-#### T14: Ticket slicing and publishing reference
+#### T19: Ticket slicing, fix Tickets and publishing reference
 
-**What**: `references/tickets.md`: one-day vertical slices, expand–contract for wide refactors, publishing per tracker (from `docs/agents/issue-tracker.md` written by `setup-spec-driven`), the Dispositions gate, ID write-back, drift listing.
+**What**: `references/tickets.md`: one-day vertical slices, expand–contract for wide refactors, fix Tickets per round, and publishing per tracker (from `docs/agents/issue-tracker.md` written by `setup-spec-driven`) with the four rules: a Spec Review with all Dispositions first, ID write-back right after each issue, never re-create a published Ticket (drift listed and updated on a go-ahead), stop and resume on failure. Issues link to the Spec, say the work is built through it, and carry no `ready-for-agent` label or "agent-grabbable" wording.
 **Where**: `skills/spec-driven/references/tickets.md`
-**Depends on**: T13
-**Reuses**: `skills/to-tickets/SKILL.md` sections 3 and 5; `skills/setup-spec-driven/issue-tracker-*.md`
+**Depends on**: T18
+**Reuses**: `skills/to-tickets/SKILL.md` sections 3 and 5 (without the label); `skills/setup-spec-driven/issue-tracker-*.md`
 **Requirement**: TKT-06, TKT-07
 
 **Done when**:
-- [ ] it states that publishing needs an explicit "publish tickets" after all Dispositions of the latest Spec Review
+- [ ] it states that publishing needs an explicit "publish tickets" after a Spec Review whose Findings all have Dispositions
+- [ ] `grep -n "ready-for-agent\|agent-grabbable" skills/spec-driven/references/tickets.md` finds nothing
 - [ ] Gate check passes: full
 
-**Tests**: uat
-**Scenarios**: TKT-06.S1, TKT-07.S1
+**Tests**: inspect
+**Scenarios**: TKT-06.S1, TKT-06.S2, TKT-06.S3, TKT-07.S1, TKT-07.S2
 **Gate**: full
 
-**Commit**: `feat(spec-driven): add Ticket slicing and publishing`
+**Commit**: `feat(spec-driven): add Ticket slicing and safe publishing`
 
 ---
 
-#### T15: Update the spec-driven SKILL.md
+#### T20: Update the spec-driven SKILL.md
 
-**What**: flow line, auto-sizing table (Tasks at every scope, Design at Medium+), `.specs` tree (`decisions/`, no `context.md`), commands table (publish tickets; Discuss removed; decisions.md), Critical Rules (implementation only through spec-driven; Tickets published only on go-ahead), Knowledge Verification Chain step 2 (records instead of `STATE.md`).
+**What**: flow line, auto-sizing table (Tasks at every scope, Design at Medium+), `.specs` tree (`decisions/`, `reviews/`, no `context.md`), commands table (publish tickets; Discuss removed; decisions.md), Critical Rules (implementation only through spec-driven; Tickets published only on go-ahead; foreign plans never edited; `graphify-out/` is a cache that may be gitignored and is never deleted, only refreshed with `graphify update .`), Knowledge Verification Chain step 2 (records instead of `STATE.md`).
 **Where**: `skills/spec-driven/SKILL.md`
-**Depends on**: T14
+**Depends on**: T19
 **Reuses**: current SKILL.md structure
-**Requirement**: GRILL-07, TKT-08 (entry-point wording)
+**Requirement**: READ-06, GRILL-07, TKT-08 (entry-point wording)
 
 **Done when**:
-- [ ] SKILL.md mentions neither `context.md` nor the safety valve
+- [ ] SKILL.md mentions neither `context.md` as something to write nor the safety valve
 - [ ] Gate check passes: full
 
-**Tests**: none (entry-point wording; its Scenarios are proven by T11 and T13)
-**Scenarios**: none - this task writes no tests
+**Tests**: inspect
+**Scenarios**: READ-06.S1
 **Gate**: full
 
 **Commit**: `docs(spec-driven): describe the merged flow in SKILL.md`
 
 ---
 
-#### T16: Memory, standards and writing references follow the records
+#### T21: Memory, standards and writing references follow the records
 
-**What**: `memory.md` keeps only `## Handoff` and points Decisions at `decisions.md`; `standards.md` §1 lists active project Decisions as Repo Standards and uses discovery; `coding-principles.md` drops ADR wording.
+**What**: `memory.md` keeps only `## Handoff` and points Decisions at `decisions.md`; `standards.md` §1 lists active project Decisions as Repo Standards and uses discovery, and §4 states that `graphify-out/` is never deleted; `coding-principles.md` drops ADR wording.
 **Where**: `skills/spec-driven/references/memory.md`, `skills/spec-driven/references/standards.md`, `skills/spec-driven/references/coding-principles.md`
-**Depends on**: T15
+**Depends on**: T20
 **Reuses**: current files
-**Requirement**: READ-01 (Repo Standard wording)
+**Requirement**: READ-01, READ-06 (Repo Standard and graph wording)
 
 **Done when**:
-- [ ] no instruction in these files writes `AD-NNN` or ADRs
+- [ ] no instruction in these files writes `AD-NNN` or ADRs, or deletes `graphify-out/`
 - [ ] Gate check passes: full
 
-**Tests**: none (wording; READ-01 is proven by T9)
+**Tests**: none (wording; READ-01 is claimed by T23 and READ-06 by T20)
 **Scenarios**: none - this task writes no tests
 **Gate**: full
 
@@ -459,73 +577,74 @@ T22 → T23 → T24 → T25
 
 ---
 
-### Phase 5: K5 Execute and reviews
+### Phase 6: K6 Execute and reviews
 
-#### T17: Execute ends at the Verifier and leaves /code-review to the human
+#### T22: Execute ends at the Verifier, with fix Tickets, and leaves /code-review to the human
 
-**What**: in `implement.md`: drop the safety valve; call `tdd` per Task; deferred ideas are surfaced and become Out of Scope rows only on a go-ahead; after the Verifier passes, say `/code-review` is available and never run it.
-**Where**: `skills/spec-driven/references/implement.md`
-**Depends on**: T16
+**What**: in `implement.md`: drop the safety valve; call `tdd` per Task; deferred ideas are surfaced and become Out of Scope rows only on a go-ahead; after the Verifier passes, say `/code-review` is available and never run it. In `implement.md` and `validate.md`: Verifier gaps become fix tasks in one fix Ticket per round.
+**Where**: `skills/spec-driven/references/implement.md`, `skills/spec-driven/references/validate.md`
+**Depends on**: T21
 **Reuses**: current per-task cycle and Verifier section
-**Requirement**: FLOW-05
+**Requirement**: FLOW-05, TKT-09
 
 **Done when**:
 - [ ] no instruction in `implement.md` runs `/code-review` or edits `context.md`
 - [ ] Gate check passes: full
 
-**Tests**: uat
-**Scenarios**: FLOW-05.S1
+**Tests**: inspect
+**Scenarios**: FLOW-05.S1, TKT-09.S1
 **Gate**: full
 
 **Commit**: `feat(spec-driven): Execute runs tdd per Task and leaves /code-review to the human`
 
 ---
 
-#### T18: tdd becomes Execute's per-Task loop
+#### T23: tdd becomes Execute's per-Task loop
 
-**What**: description and intro say it is the test-first loop spec-driven Execute runs; seams come from Scenarios and Design, asking only for unnamed interfaces; the ADR line becomes a link to `decisions.md`.
+**What**: description and intro say it is the test-first loop spec-driven Execute runs; seams come from Scenarios and Design, asking only for unnamed interfaces; the ADR line becomes a link to `decisions.md`, so a Task reads active Decisions, root and per-context ADRs, and a legacy `context.md` before its test.
 **Where**: `skills/tdd/SKILL.md`
-**Depends on**: T17
+**Depends on**: T22
 **Reuses**: current tdd content (tests.md, mocking.md unchanged)
-**Requirement**: FLOW-03
+**Requirement**: FLOW-03, READ-01, EDGE-01, PLAN-03
 
 **Done when**:
 - [ ] the description no longer offers to build features on its own
 - [ ] Gate check passes: full
 
-**Tests**: uat
-**Scenarios**: FLOW-03.S1
+**Tests**: inspect
+**Scenarios**: FLOW-03.S1, READ-01.S1, EDGE-01.S1, EDGE-01.S2, EDGE-01.S3, PLAN-03.S1
 **Gate**: full
 
 **Commit**: `feat(tdd): run as the per-Task loop inside spec-driven Execute`
 
 ---
 
-#### T19: Dispositions write Amendments
+#### T24: Dispositions rewrite Decisions in place
 
-**What**: in `review.md`, after recording Dispositions, append Amendments for Findings that change Decisions and update `summary.md`; add the publish-tickets gate; in `finding-format.md`, replace `AD-NNN` inputs with Grilling Records.
+**What**: in `review.md`, after recording Dispositions, rewrite each changed Decision in its original record with a `Changed` line, add review-made Decisions under `## Review`, update `summary.md` when the record's summary or Areas change, turn accepted Change Review Findings into fix tasks in one fix Ticket, and keep the publish-tickets gate; in `finding-format.md`, replace `AD-NNN` inputs with Grilling Records.
 **Where**: `skills/spec-driven/references/review.md`, `skills/spec-driven/references/finding-format.md`
-**Depends on**: T18
+**Depends on**: T23
 **Reuses**: current "After a reviewer returns" steps
-**Requirement**: REC-05
+**Requirement**: REC-05, TKT-09
 
 **Done when**:
-- [ ] step order: record Dispositions, write Amendments, commit, distill Lessons
+- [ ] step order: record Dispositions, rewrite Decisions, commit, distill Lessons
+- [ ] neither file mentions Amendments or superseded Decisions
 - [ ] Gate check passes: full
 
-**Tests**: uat
-**Scenarios**: REC-05.S1
+**Tests**: inspect
+**Scenarios**: REC-05.S1, REC-05.S2, REC-05.S3, TKT-09.S2
 **Gate**: full
 
-**Commit**: `feat(spec-driven): record Amendments when a Disposition changes a Decision`
+**Commit**: `feat(spec-driven): rewrite Decisions in place when a Disposition changes them`
 
 ---
 
-#### T20: spec-reviewer checks the plan against the Grilling Record
+#### T25: spec-reviewer checks the plan against the Grilling Record
 
-**What**: read via `decisions.md` (records, discovery, legacy); add the Thought Partnership, Truthful Reporting, Practical Judgment and Communication checks from D-0001.20.
+**What**: read via `decisions.md` (records, discovery, legacy sources); add the Thought Partnership, Truthful Reporting, Practical Judgment and Communication checks from D-grill-in-spec-driven.20, including bundled choices; for a foreign plan, judge content only and write the report under `.specs/reviews/`.
 **Where**: `agents/spec-reviewer.md`
-**Depends on**: T19
+**Depends on**: T24
 **Reuses**: current "Read first" and "What to check" sections
 **Requirement**: REV-03, REV-04, REV-05
 
@@ -533,19 +652,19 @@ T22 → T23 → T24 → T25
 - [ ] the agent no longer reads `context.md` or `AD-NNN` as primary sources
 - [ ] Gate check passes: full
 
-**Tests**: uat
-**Scenarios**: REV-03.S1, REV-04.S1, REV-05.S1
+**Tests**: inspect
+**Scenarios**: REV-03.S1, REV-04.S1, REV-05.S1, REV-05.S2
 **Gate**: full
 
 **Commit**: `feat(agents): spec-reviewer checks plans against Grilling Records`
 
 ---
 
-#### T21: change-reviewer checks the Change against active Decisions
+#### T26: change-reviewer checks the Change against active Decisions
 
-**What**: read via `decisions.md`; flag a Change contradicting an active Decision without an Amendment, and a silent departure from a `Decided by: user` choice as a false Claim.
+**What**: read via `decisions.md`; flag a Change contradicting an active Decision that was not rewritten, and a silent departure from a `Decided by: user` choice as a false Claim.
 **Where**: `agents/change-reviewer.md`
-**Depends on**: T20
+**Depends on**: T25
 **Reuses**: current "Read first" and "What to check" sections
 **Requirement**: REV-06
 
@@ -553,7 +672,7 @@ T22 → T23 → T24 → T25
 - [ ] the agent no longer reads `AD-NNN` as a primary source
 - [ ] Gate check passes: full
 
-**Tests**: uat
+**Tests**: inspect
 **Scenarios**: REV-06.S1
 **Gate**: full
 
@@ -561,13 +680,13 @@ T22 → T23 → T24 → T25
 
 ---
 
-### Phase 6: K6 Side doors and cleanup
+### Phase 7: K7 Side doors and cleanup
 
-#### T22: diagnosing-bugs hands off to Specify
+#### T27: diagnosing-bugs hands off to Specify
 
 **What**: Phase 5 becomes a hand-off of the repro, root cause and seam to a Small Specify; the ADR line becomes a link to `decisions.md`.
 **Where**: `skills/diagnosing-bugs/SKILL.md`
-**Depends on**: T21
+**Depends on**: T26
 **Reuses**: Phases 1-4 unchanged
 **Requirement**: FLOW-04
 
@@ -575,7 +694,7 @@ T22 → T23 → T24 → T25
 - [ ] no instruction in the skill applies a fix
 - [ ] Gate check passes: full
 
-**Tests**: uat
+**Tests**: inspect
 **Scenarios**: FLOW-04.S1
 **Gate**: full
 
@@ -583,11 +702,31 @@ T22 → T23 → T24 → T25
 
 ---
 
-#### T23: grill-with-docs and improve-codebase-architecture write Grilling Records
+#### T28: prototype hands its verdict to Specify
+
+**What**: rule 6 keeps the prototype on a throwaway branch and records the verdict and the question it settled, then hands the verdict to Specify instead of folding it into the real code.
+**Where**: `skills/prototype/SKILL.md`
+**Depends on**: T27
+**Reuses**: rules 1-5 unchanged; T27's hand-off wording
+**Requirement**: FLOW-06
+
+**Done when**:
+- [ ] `grep -n "into the real code" skills/prototype/SKILL.md` finds nothing
+- [ ] Gate check passes: full
+
+**Tests**: inspect
+**Scenarios**: FLOW-06.S1
+**Gate**: full
+
+**Commit**: `feat(prototype): hand validated verdicts to spec-driven`
+
+---
+
+#### T29: grill-with-docs and improve-codebase-architecture write Grilling Records
 
 **What**: `grill-with-docs` (+ openai.yaml) describes writing a Grilling Record and `CONTEXT.md` and points features at spec-driven; `improve-codebase-architecture` (+ `HTML-REPORT.md`, openai.yaml) treats active Decisions as it treated ADRs and records rejections in its record.
 **Where**: `skills/grill-with-docs/SKILL.md`, `skills/improve-codebase-architecture/SKILL.md`, `skills/improve-codebase-architecture/HTML-REPORT.md`
-**Depends on**: T22
+**Depends on**: T28
 **Reuses**: current texts
 **Requirement**: REC-09
 
@@ -595,7 +734,7 @@ T22 → T23 → T24 → T25
 - [ ] neither skill mentions writing or offering an ADR
 - [ ] Gate check passes: full
 
-**Tests**: uat
+**Tests**: inspect
 **Scenarios**: REC-09.S1
 **Gate**: full
 
@@ -603,19 +742,20 @@ T22 → T23 → T24 → T25
 
 ---
 
-#### T24: Delete the retired skills
+#### T30: Delete the retired skills
 
 **What**: `git rm -r` `skills/ask-matt`, `skills/implement`, `skills/to-spec`, `skills/to-tickets`, `skills/triage`, `skills/wayfinder` and `skills/engineering-README.md`.
 **Where**: `skills/` (seven paths)
-**Depends on**: T23
+**Depends on**: T29
 **Reuses**: none
-**Requirement**: FLOW-01 (source side; installed copies handled by T6)
+**Requirement**: FLOW-01 (source side; installed copies handled by T11)
 
 **Done when**:
 - [ ] `grep -rn "ask-matt\|to-tickets\|to-spec\|triage\|wayfinder\|/implement" skills agents` finds nothing outside historical records
+- [ ] `grep -rn "ready-for-agent\|agent-grabbable" skills agents` finds nothing
 - [ ] Gate check passes: full
 
-**Tests**: none (deletion; FLOW-01 is proven by T6)
+**Tests**: none (deletion; FLOW-01 is proven by T11)
 **Scenarios**: none - this task writes no tests
 **Gate**: full
 
@@ -623,11 +763,11 @@ T22 → T23 → T24 → T25
 
 ---
 
-#### T25: Rewrite the README for the merged flow
+#### T31: Rewrite the README for the merged flow
 
-**What**: skill table, flow description (Specify grill, Design at Medium+, Tasks and Tickets, reviews, Execute with tdd, Verifier, `/code-review`), `.specs/decisions/`, `fd` requirement, attribution as "based on mattpocock/skills", no `engineering-README.md`.
+**What**: skill table, flow description (Specify grill, Design at Medium+, Tasks and Tickets, reviews, Execute with tdd, Verifier with `inspect` proofs, `/code-review`), `.specs/decisions/`, legacy and foreign plans, `fd` and graphify requirements (and that `graphify-out/` is kept), attribution as "based on mattpocock/skills", no `engineering-README.md`.
 **Where**: `README.md`
-**Depends on**: T24
+**Depends on**: T30
 **Reuses**: current README sections
 **Requirement**: none (documentation)
 
@@ -648,40 +788,44 @@ T22 → T23 → T24 → T25
 | Task | Scope | Status |
 | --- | --- | --- |
 | T1 | 1 helper module | ✅ Granular |
-| T2, T3, T4, T5 | 1 script change each | ✅ Granular |
-| T6 | 1 installer change | ✅ Granular |
-| T7, T9, T11-T15, T17-T22, T25 | 1 file each (T11 also deletes `discuss.md`, T19 touches the format file it depends on) | ✅ Granular |
-| T8 | 1 skill's format (new file + SKILL.md + one deletion) | ⚠️ Multi-file, one concept |
-| T10 | 1 directory rename | ⚠️ Multi-file, one concept |
-| T16 | 3 small wording updates | ⚠️ Multi-file, one concept |
-| T23 | 2 skills, same change | ⚠️ Multi-file, one concept |
-| T24 | 7 deletions | ⚠️ Multi-file, one concept |
+| T2 | 1 check across `validate_scenarios.py` and the parser it uses | ⚠️ Multi-file, one concept |
+| T3 | 1 rule in the Execute and Verifier references | ⚠️ Multi-file, one concept |
+| T4-T10 | 1 script change each | ✅ Granular |
+| T11 | 1 installer change | ✅ Granular |
+| T12, T14, T16-T20, T23, T25-T28, T31 | 1 file each (T16 also deletes `discuss.md`) | ✅ Granular |
+| T13 | 1 skill's format (new file + SKILL.md + one deletion) | ⚠️ Multi-file, one concept |
+| T15 | 1 directory rename | ⚠️ Multi-file, one concept |
+| T21 | 3 small wording updates | ⚠️ Multi-file, one concept |
+| T22 | 1 rule in the Execute and Verifier references | ⚠️ Multi-file, one concept |
+| T24 | review.md plus the format file it depends on | ⚠️ Multi-file, one concept |
+| T29 | 2 skills, same change | ⚠️ Multi-file, one concept |
+| T30 | 7 deletions | ⚠️ Multi-file, one concept |
 
 ## Diagram-Definition Cross-Check
 
 | Task | Depends on (definition) | Diagram arrow | Match |
 | --- | --- | --- | --- |
 | T1 | None | start of Phase 1 | ✅ |
-| T2 | T1 | T1 → T2 | ✅ |
-| T3 | T2 | T2 → T3 | ✅ |
+| T2-T3 | previous task | chain | ✅ |
 | T4 | T3 | start of Phase 2 (cross-phase) | ✅ |
-| T5 | T4 | T4 → T5 | ✅ |
-| T6 | T5 | T5 → T6 | ✅ |
-| T7 | T6 | start of Phase 3 (cross-phase) | ✅ |
-| T8-T10 | previous task | chain | ✅ |
-| T11 | T10 | start of Phase 4 (cross-phase) | ✅ |
-| T12-T16 | previous task | chain | ✅ |
+| T5-T7 | previous task | chain | ✅ |
+| T8 | T7 | start of Phase 3 (cross-phase) | ✅ |
+| T9-T11 | previous task | chain | ✅ |
+| T12 | T11 | start of Phase 4 (cross-phase) | ✅ |
+| T13-T16 | previous task | chain | ✅ |
 | T17 | T16 | start of Phase 5 (cross-phase) | ✅ |
 | T18-T21 | previous task | chain | ✅ |
 | T22 | T21 | start of Phase 6 (cross-phase) | ✅ |
-| T23-T25 | previous task | chain | ✅ |
+| T23-T26 | previous task | chain | ✅ |
+| T27 | T26 | start of Phase 7 (cross-phase) | ✅ |
+| T28-T31 | previous task | chain | ✅ |
 
 ## Test Co-location Validation
 
 | Task | Layer | Matrix requires | Task Tests | Status |
 | --- | --- | --- | --- | --- |
 | T1 | test infrastructure | none | none | ✅ |
-| T2-T5 | deterministic scripts | integration | integration | ✅ |
-| T6, T10 | installer | integration | integration | ✅ |
-| T7-T9, T11-T14, T17-T23 | skill and agent prose | uat | uat | ✅ |
-| T15, T16, T24, T25 | prose with no own Scenario | none | none | ✅ |
+| T2, T4-T10 | deterministic scripts | integration | integration | ✅ |
+| T11, T15 | installer | integration (inspect for the fd warning) | integration | ✅ |
+| T3, T16-T20, T22-T29 | skill and agent prose | inspect | inspect | ✅ |
+| T12-T14, T21, T30, T31 | prose with no own Scenario | none | none | ✅ |

@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 6,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "spec_review_finding::name shared per feature files under specs so two branches cannot pick the same name silently",
+      "text": "Name shared per-feature files under .specs so two branches cannot pick the same name silently",
+      "signal": "spec_review_finding",
+      "audience": "author",
+      "scope": ".specs",
+      "status": "candidate",
+      "features": [
+        "integrate-skills"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/integrate-skills/spec-review-1.md SR1-F3 (.specs)"
+      ],
+      "created": "2026-11-14T14:16:40Z",
+      "last_seen": "2026-11-14T14:16:40Z"
+    },
+    {
+      "id": "L-002",
+      "key": "spec_review_finding::make every write to an external tracker resumable and never create the same item twice",
+      "text": "Make every write to an external tracker resumable and never create the same item twice",
+      "signal": "spec_review_finding",
+      "audience": "author",
+      "scope": "trackers",
+      "status": "candidate",
+      "features": [
+        "integrate-skills"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/integrate-skills/spec-review-1.md SR1-F4 (trackers)"
+      ],
+      "created": "2026-11-14T14:16:40Z",
+      "last_seen": "2026-11-14T14:16:40Z"
+    },
+    {
+      "id": "L-003",
+      "key": "spec_review_finding::when a validator makes a field required for every task cover the fix tasks that reviews and the verifier append",
+      "text": "When a validator makes a field required for every task, cover the fix tasks that reviews and the Verifier append",
+      "signal": "spec_review_finding",
+      "audience": "author",
+      "scope": "scripts",
+      "status": "candidate",
+      "features": [
+        "integrate-skills"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/integrate-skills/spec-review-1.md SR1-F6 (scripts)"
+      ],
+      "created": "2026-11-14T14:16:40Z",
+      "last_seen": "2026-11-14T14:16:40Z"
+    },
+    {
+      "id": "L-004",
+      "key": "spec_review_finding::validators read markdown table cells by header name never by position",
+      "text": "Validators read markdown table cells by header name, never by position",
+      "signal": "spec_review_finding",
+      "audience": "author",
+      "scope": "scripts",
+      "status": "candidate",
+      "features": [
+        "integrate-skills"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/integrate-skills/spec-review-1.md SR1-F8 (scripts)"
+      ],
+      "created": "2026-11-14T14:16:40Z",
+      "last_seen": "2026-11-14T14:16:40Z"
+    },
+    {
+      "id": "L-005",
+      "key": "review_rejection::do not ask for a graphify stub in tests this repo requires the real graphify on purpose",
+      "text": "Do not ask for a graphify stub in tests; this repo requires the real graphify on purpose",
+      "signal": "review_rejection",
+      "audience": "reviewer",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "integrate-skills"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        ".specs/features/integrate-skills/spec-review-1.md SR1-F9 (tests)"
+      ],
+      "created": "2026-11-14T14:16:40Z",
+      "last_seen": "2026-11-14T14:16:40Z"
+    }
+  ]
+}

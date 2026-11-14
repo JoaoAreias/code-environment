@@ -41,12 +41,24 @@ The human's explicit go-ahead to execute planned work. For a new Spec it comes o
 _Avoid_: spec approval, sign-off
 
 **Decision**:
-A choice made while planning, with its reason and the alternatives given up. It binds either one feature or the whole project, lives in the Grilling Record of the session that made it, and stays active until a later Decision supersedes it.
+A choice made while planning, with its reason and the alternatives given up. It binds either one feature or the whole project and lives in the Grilling Record of the session that made it. When it changes, its text is rewritten in place with a line saying when and why; git keeps the old text.
 _Avoid_: ADR, architecture decision record, AD
 
 **Grilling Record**:
-The complete written account of one grilling session: the context, every question asked with its options and answer, the Decisions it produced and their consequences. A feature's Grilling Record also collects that feature's later Design Decisions and review amendments, so one file holds its whole decision history; the Spec links to it.
+The complete written account of one grilling session: the context, every question asked with its options and answer, the Decisions it produced and their consequences. A feature's Grilling Record also collects that feature's later Design and review Decisions, so one file holds its current decisions and how they were reached; the Spec links to it.
 _Avoid_: ADR, decision record, session notes
+
+**Native plan**:
+A plan written by spec-driven under the current rules: its Spec links its Grilling Record. Every structural check applies.
+_Avoid_: new plan, current plan
+
+**Legacy plan**:
+A plan written by spec-driven under older rules, with no Grilling Record link or with a per-feature `context.md`. It is still read and reviewed; the newer structural checks only warn.
+_Avoid_: old spec, outdated plan
+
+**Foreign plan**:
+A plan written outside spec-driven, such as a teammate's PRD, a design doc or another tool's spec folder. It is read and reviewed but never validated or edited; building from it starts with a native Spec that links to it.
+_Avoid_: external spec, third-party plan
 
 **Claim**:
 A statement, made by whoever produced or checked a Change, that something about it is true: a task is done, a requirement is verified, tests pass, a decision was taken for a reason.
@@ -85,6 +97,10 @@ _Avoid_: requirement (alone), AC rule
 **Scenario**:
 One concrete Given/When/Then example of an Acceptance Criterion, identified within its Spec. Scenarios, not tests, are the contract a Change must honor.
 _Avoid_: test case, example, user story
+
+**Proof type**:
+How a Scenario is proven: `test`, by a Behavior Test, or `inspect`, by the Verifier reading the final files and recording its evidence. `inspect` is for changes a test cannot exercise, such as prompts, infrastructure code or configuration.
+_Avoid_: UAT, manual test, test layer
 
 **Behavior Test**:
 A test that proves exactly one Scenario through the code's public interface, and survives any refactor that keeps that Scenario true.
