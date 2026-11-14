@@ -20,10 +20,17 @@ def edit(repo, *paths):
             f.write("\nA line added after the last commit.\n")
 
 
+def git(repo, *args):
+    return subprocess.run(["git", "-C", repo, *args], check=True, capture_output=True, text=True).stdout
+
+
 def head_paths(repo):
-    out = subprocess.run(["git", "-C", repo, "show", "--name-only", "--format=", "HEAD"],
-                         check=True, capture_output=True, text=True).stdout
-    return out.split()
+    return git(repo, "show", "--name-only", "--format=", "HEAD").split()
+
+
+def read(root, path):
+    with open(os.path.join(root, path), "rb") as f:
+        return f.read()
 
 
 class Snapshot(unittest.TestCase):
@@ -143,6 +150,61 @@ class MandatoryPlanFiles(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertNotRegex(out, r"(?m)^STOP")
         self.assertIn("## Review context (Spec Review)", out)
+
+
+class ForeignPlans(unittest.TestCase):
+
+    def test_review_a_teammates_plan(self):
+        """
+        Scenario: PLAN-04.S1 review a teammate's plan
+          Given a fixture repository with a committed docs/rfcs/042-billing.md and no .specs/features/ folder for it
+          When prep_review.py spec docs/rfcs/042-billing.md runs
+          Then it exits 0
+          And its output says the structural validators were skipped because the plan is foreign
+          And its output names the report path .specs/reviews/docs-rfcs-042-billing/spec-review-1.md
+          And docs/rfcs/042-billing.md is unchanged
+        """
+        plan = "docs/rfcs/042-billing.md"
+        repo = fixtures.build_repo(self, "foreign-rfc")
+        code, out = prep(repo, plan)
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r"(?m)^Skipped: the plan is foreign\b.*`validate_spec\.py` and `validate_tasks\.py`")
+        self.assertNotRegex(out, r"validate_\w+\.py` exit")
+        self.assertIn("write the report to `.specs/reviews/docs-rfcs-042-billing/spec-review-1.md`", out)
+        self.assertEqual(read(repo, plan), read(os.path.join(fixtures.FIXTURES_DIR, "foreign-rfc"), plan))
+        self.assertEqual(git(repo, "status", "--porcelain", "--", plan), "")
+        self.assertEqual(git(repo, "log", "--format=%s", "--", plan).splitlines(), ["test: fixture foreign-rfc"])
+
+    def test_same_named_plans_keep_separate_histories(self):
+        """
+        Scenario: PLAN-04.S2 same-named plans keep separate histories
+          Given a fixture repository with committed .kiro/specs/payments/design.md and .kiro/specs/orders/design.md
+          And .specs/reviews/kiro-specs-payments-design/spec-review-1.md already exists
+          When prep_review.py spec .kiro/specs/orders/design.md runs
+          Then its output names the report path .specs/reviews/kiro-specs-orders-design/spec-review-1.md
+          And its output says there is no previous run
+        """
+        repo = fixtures.build_repo(self, "foreign-kiro", "foreign-kiro-reviewed")
+        code, out = prep(repo, ".kiro/specs/orders/design.md")
+        self.assertEqual(code, 0, out)
+        self.assertIn("write the report to `.specs/reviews/kiro-specs-orders-design/spec-review-1.md`", out)
+        self.assertRegex(out, r"(?m)^- Previous run: none$")
+
+    def test_a_folder_is_one_plan(self):
+        """
+        Scenario: PLAN-04.S3 a folder is one plan
+          Given a fixture repository with committed .kiro/specs/payments/requirements.md, design.md and tasks.md
+          When prep_review.py spec .kiro/specs/payments/ runs
+          Then it exits 0
+          And its output lists all three files as the plan files
+          And its output names the report path .specs/reviews/kiro-specs-payments/spec-review-1.md
+        """
+        repo = fixtures.build_repo(self, "foreign-kiro")
+        code, out = prep(repo, ".kiro/specs/payments/")
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r"(?m)^- Plan files: `\.kiro/specs/payments/design\.md`, "
+                              r"`\.kiro/specs/payments/requirements\.md`, `\.kiro/specs/payments/tasks\.md`$")
+        self.assertIn("write the report to `.specs/reviews/kiro-specs-payments/spec-review-1.md`", out)
 
 
 if __name__ == "__main__":

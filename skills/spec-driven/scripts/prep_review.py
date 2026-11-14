@@ -10,7 +10,7 @@ trigger shows that to the human and stops. Missing evidence never degrades
 silently.
 
 Usage:
-  python3 <skill-dir>/scripts/prep_review.py spec   [feature] [--root DIR]
+  python3 <skill-dir>/scripts/prep_review.py spec   [feature | path] [--root DIR]
   python3 <skill-dir>/scripts/prep_review.py change [feature] [--root DIR]
           [--base REF] [--no-spec] [--unverified]
 
@@ -19,6 +19,10 @@ spec:   requires tasks.md at every scope and design.md at Medium, Large or Compl
         .specs/STATE.md, the lessons store, CONTEXT-MAP.md and every CONTEXT.md)
         so a reviewer's stray edit can always be undone, refusing when other
         uncommitted changes exist.
+        A path to a file or folder outside .specs/features/ is a foreign plan
+        (a folder is one plan made of every *.md in it): it is never written or
+        committed, the validators are skipped, and the report goes to
+        .specs/reviews/<slug of the path>/spec-review-<n>.md.
 change: requires a clean tree, a non-empty Change, a Spec (unless --no-spec), and
         a PASS validation.md (unless --unverified). A FAIL verdict always stops.
 Both:   refresh the graphify graph (graphify-out/ is kept out of git through
@@ -228,8 +232,47 @@ def header(lines, title, root):
     lines.append(f"- spec-driven skill: `{SKILL_DIR}` (scripts in `scripts/`, references in `references/`)")
 
 
-def prep_spec(args, root):
-    feature = pick_feature(root, args.feature)
+def foreign_plan(root, target):
+    """Repo-relative path of a foreign plan: `target` names a file or folder outside .specs/features/.
+
+    Returns None when `target` is empty or names a feature (by name or by a path inside its folder).
+    """
+    if not target or target in list_features(root):
+        return None
+    path = next((p for p in (os.path.realpath(target), os.path.realpath(os.path.join(root, target))) if os.path.exists(p)), None)
+    if path is None:
+        raise Stop(f"no feature `{target}` under .specs/features/ and no file or folder at that path "
+                   f"(features: {', '.join(list_features(root)) or 'none'})")
+    rel = os.path.relpath(path, os.path.realpath(root))
+    parts = rel.split(os.sep)
+    if rel == "." or parts[0] == "..":
+        raise Stop(f"`{target}` is not a plan inside this repository; pass a feature name or the path of a plan file or folder")
+    if parts[:2] == [".specs", "features"] and len(parts) > 2:
+        return None
+    return rel.replace(os.sep, "/")
+
+
+def snapshot(root, plan, name):
+    """Commit the uncommitted plan paths so a stray edit can be undone; return the Reviewed commit line."""
+    dirty = dirty_paths(root)
+    outside = [p for p in dirty if not in_plan(p, plan)]
+    if outside:
+        raise Stop("uncommitted changes outside the plan would not be protected by the pre-review commit:\n  "
+                   + "\n  ".join(outside[:20]) + "\nCommit or stash them, then retry.")
+    if dirty:
+        must_git(root, "add", "--", *dirty)
+        msg = f"docs(spec): snapshot {name} before spec review"
+        rc, out, err = git(root, "commit", "-m", msg)
+        if rc != 0:
+            raise Stop(f"pre-review commit failed (hooks?):\n{err or out}")
+        snap = "plan committed by prep (`" + msg + "`)"
+    else:
+        snap = "plan already committed"
+    return f"- Reviewed commit: `{must_git(root, 'rev-parse', '--short', 'HEAD')}` ({snap})"
+
+
+def feature_target(root, feature):
+    """Return (name, report dir, intro lines, decision lines, structural check lines) for a feature's plan."""
     fdir = os.path.join(features_dir(root), feature)
     rel = os.path.relpath(fdir, root)
     if not os.path.isfile(os.path.join(fdir, "spec.md")):
@@ -240,26 +283,9 @@ def prep_spec(args, root):
         raise Stop(f"{rel}/tasks.md does not exist; every feature needs Tasks and Tickets before a Spec Review. Run the Tasks phase first")
     if scope in ("Medium", "Large", "Complex") and not os.path.isfile(os.path.join(fdir, "design.md")):
         raise Stop(f"{rel}/design.md does not exist; a {scope} feature needs a Design before a Spec Review. Run the Design phase first")
-    plan = [rel + "/", *SHARED_PLAN_PATHS]
-    dirty = dirty_paths(root)
-    outside = [p for p in dirty if not in_plan(p, plan)]
-    if outside:
-        raise Stop("uncommitted changes outside the plan would not be protected by the pre-review commit:\n  "
-                   + "\n  ".join(outside[:20]) + "\nCommit or stash them, then retry.")
-    if dirty:
-        must_git(root, "add", "--", *dirty)
-        msg = f"docs(spec): snapshot {feature} before spec review"
-        rc, out, err = git(root, "commit", "-m", msg)
-        if rc != 0:
-            raise Stop(f"pre-review commit failed (hooks?):\n{err or out}")
-        snap = "plan committed by prep (`" + msg + "`)"
-    else:
-        snap = "plan already committed"
-    sha = must_git(root, "rev-parse", "--short", "HEAD")
-    graph = refresh_graph(root)
-    n, report, prev = next_run(fdir, "spec-review")
-    standards, lint = standard_sources(root)
     present = [f for f in ("spec.md", "design.md", "tasks.md") if os.path.isfile(os.path.join(fdir, f))]
+    intro = [f"- Feature: `{feature}` · scope: {scope}",
+             f"- Plan files: {', '.join('`' + rel + '/' + f + '`' for f in present)}"]
     records = feature_records(root, feature)
     decisions = ["- Grilling Records: " + (", ".join(f"`{r}`" for r in records)
                                            or "none named for this feature in `.specs/decisions/summary.md`")]
@@ -267,13 +293,50 @@ def prep_spec(args, root):
         decisions.append(f"- Legacy decision source: `{rel}/context.md`")
     if not spec_is_native(spec_text):
         decisions.append("- Decisions log: `.specs/STATE.md`" if os.path.isfile(os.path.join(root, ".specs", "STATE.md")) else "- Decisions log: none")
+    checks = []
+    for script in ("validate_spec.py", "validate_tasks.py"):
+        rc, text = script_summary(root, os.path.join(HERE, script), feature, "--root", root)
+        checks += [f"`{script}` exit {rc}:", "```", text, "```"]
+    return feature, fdir, intro, decisions, checks
+
+
+def foreign_target(root, rel):
+    """Return the same tuple as feature_target for a foreign plan. The plan is only read, never written or committed."""
+    path = os.path.join(root, rel)
+    if os.path.isdir(path):
+        files = sorted(os.path.relpath(p, root).replace(os.sep, "/")
+                       for p in glob.glob(os.path.join(glob.escape(path), "**", "*.md"), recursive=True) if os.path.isfile(p))
+        if not files:
+            raise Stop(f"`{rel}` holds no markdown files, so there is no plan to review")
+        stem = rel
+    else:
+        files, stem = [rel], os.path.splitext(rel)[0]
+    dirty = [p for p in dirty_paths(root) if p in files]
+    if dirty:
+        raise Stop("the foreign plan has uncommitted changes, and prep never commits a plan it does not own:\n  "
+                   + "\n  ".join(dirty) + "\nCommit or stash them, then retry.")
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", stem).strip("-")
+    intro = [f"- Plan: `{rel}` · foreign (not written by spec-driven): review it as it is and never edit it",
+             f"- Plan files: {', '.join('`' + f + '`' for f in files)}"]
+    checks = ["Skipped: the plan is foreign (not written by spec-driven), so `validate_spec.py` and `validate_tasks.py`, "
+              "which check spec-driven's own file format, do not apply."]
+    return slug, os.path.join(root, ".specs", "reviews", slug), intro, [], checks
+
+
+def prep_spec(args, root):
+    foreign = foreign_plan(root, args.feature)
+    name, rdir, intro, decisions, checks = (foreign_target(root, foreign) if foreign
+                                            else feature_target(root, pick_feature(root, args.feature)))
+    reviewed = snapshot(root, [os.path.relpath(rdir, root) + "/", *SHARED_PLAN_PATHS], name)
+    graph = refresh_graph(root)
+    n, report, prev = next_run(rdir, "spec-review")
+    standards, lint = standard_sources(root)
 
     out = []
     header(out, "Spec Review", root)
     out += [
-        f"- Feature: `{feature}` · scope: {scope}",
-        f"- Plan files: {', '.join('`' + rel + '/' + f + '`' for f in present)}",
-        f"- Reviewed commit: `{sha}` ({snap})",
+        *intro,
+        reviewed,
         f"- Run: SR{n} · write the report to `{os.path.relpath(report, root)}` · Finding IDs `SR{n}-F1`, `SR{n}-F2`, ...",
         f"- Previous run: `{os.path.relpath(prev, root)}`" if prev else "- Previous run: none",
         *decisions,
@@ -287,10 +350,8 @@ def prep_spec(args, root):
         "",
         "### Structural checks",
         "",
+        *checks,
     ]
-    for script, target in (("validate_spec.py", feature), ("validate_tasks.py", feature)):
-        rc, text = script_summary(root, os.path.join(HERE, script), target, "--root", root)
-        out += [f"`{script}` exit {rc}:", "```", text, "```"]
     return "\n".join(out)
 
 
