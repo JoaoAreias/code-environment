@@ -63,5 +63,20 @@ class Tickets(unittest.TestCase):
         self.assertIn("validate_tasks: 1 error(s)", out)
 
 
+class LegacyTaskPlans(unittest.TestCase):
+
+    def test_legacy_tasks_only_warn(self):
+        """
+        Scenario: PLAN-02.S1 legacy tasks only warn
+          Given a feature whose spec.md has no Grilling Record line and whose tasks.md has valid tasks and no Tickets section
+          When validate_tasks.py runs on it
+          Then it exits 0
+          And its output warns about "Tickets"
+        """
+        code, out = validate(self, "base", "spec-legacy", "tasks-no-tickets")
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r"WARN .*Tickets")
+
+
 if __name__ == "__main__":
     unittest.main()
