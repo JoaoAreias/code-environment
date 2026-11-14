@@ -9,8 +9,23 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 OPENCODE_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 SETTINGS="$CLAUDE_DIR/settings.json"
-# Skills this repo used to ship under another name; removed on install.
-RETIRED_SKILLS="tlc-spec-driven"
+# Skills this repo no longer ships, one per line as `name|phrase`. The phrase is
+# text from the SKILL.md this repo shipped under that name. The skills folder is
+# shared with other sources, so an installed folder is removed only when it is a
+# real folder (not a symlink) whose SKILL.md contains the phrase.
+RETIRED_SKILLS="tlc-spec-driven|name: tlc-spec-driven
+ask-matt|A router over the skills in this repo.
+implement|Use /tdd where possible, at pre-agreed seams.
+to-spec|Do NOT interview the user; just synthesize what you already know.
+to-tickets|tracer-bullet vertical slices, each declaring the tickets that
+triage|through a small state machine of triage roles.
+wayfinder|Wayfinding is about finding that way, not charging at the destination.
+wizard|walks a human, step by step, through a manual procedure
+setup-matt-pocock-skills|Scaffold the per-repo configuration that the engineering skills assume"
+
+is_retired() {
+  printf '%s\n' "$RETIRED_SKILLS" | grep -q "^$1|"
+}
 
 if ! command -v node >/dev/null 2>&1; then
   echo "ERROR: 'node' is required (renders agents and merges hook config into settings.json)."
@@ -21,14 +36,25 @@ mkdir -p "$CLAUDE_DIR/skills" "$CLAUDE_DIR/hooks" "$CLAUDE_DIR/agents"
 
 # 1. Skills — copy every skills/<name>/ folder that has a SKILL.md
 echo "Installing skills..."
-for name in $RETIRED_SKILLS; do
-  if [ -d "$CLAUDE_DIR/skills/$name" ]; then
-    rm -rf "$CLAUDE_DIR/skills/$name"
-    echo "  removed retired skill $name"
+while IFS='|' read -r name phrase; do
+  dest="$CLAUDE_DIR/skills/$name"
+  if [ ! -e "$dest" ] && [ ! -L "$dest" ]; then
+    continue
   fi
-done
+  if [ ! -L "$dest" ] && [ -f "$dest/SKILL.md" ] && grep -qF -- "$phrase" "$dest/SKILL.md"; then
+    rm -rf "$dest"
+    echo "  removed retired skill $name"
+  else
+    echo "  skipped $name: not installed by this repo"
+  fi
+done <<RETIRED
+$RETIRED_SKILLS
+RETIRED
 for dir in "$SCRIPT_DIR"/skills/*/; do
   name="$(basename "$dir")"
+  if is_retired "$name"; then
+    continue
+  fi
   if [ -f "$dir/SKILL.md" ]; then
     rm -rf "$CLAUDE_DIR/skills/$name"
     cp -r "$dir" "$CLAUDE_DIR/skills/$name"
@@ -56,7 +82,12 @@ else
   echo "WARNING: graphify not found and uv unavailable. Install it (pipx install graphifyy) before /spec-review or /code-review."
 fi
 
-# 4. Hooks — copy flat (caveman-config.js locates SKILL.md via
+# 4. fd — spec-driven lists decision records and other flows' plans with it
+if ! command -v fd >/dev/null 2>&1; then
+  echo "WARNING: fd not found. spec-driven needs it to find decisions and plans in a repo; install fd (https://github.com/sharkdp/fd) before the next Specify."
+fi
+
+# 5. Hooks — copy flat (caveman-config.js locates SKILL.md via
 #    ../skills/caveman/SKILL.md relative to this directory, so hooks and
 #    skills must stay siblings)
 echo "Installing hooks..."
@@ -66,7 +97,7 @@ done
 chmod +x "$CLAUDE_DIR/hooks/caveman-statusline.sh"
 echo "  $(ls "$SCRIPT_DIR"/hooks | wc -l | tr -d ' ') files"
 
-# 5. settings.json — wire SessionStart, UserPromptSubmit, statusLine
+# 6. settings.json — wire SessionStart, UserPromptSubmit, statusLine
 echo "Wiring settings.json..."
 if [ ! -f "$SETTINGS" ]; then
   echo '{}' > "$SETTINGS"
