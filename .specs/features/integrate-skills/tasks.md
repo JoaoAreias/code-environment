@@ -625,8 +625,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: GRILL-01, GRILL-02, GRILL-03 (support file; proven through Specify in T16)
 
 **Done when**:
-- [ ] the skill states one question per turn with options and a recommendation, both escapes, and Binds in the recommendation
-- [ ] Gate check passes: full
+- [x] the skill states one question per turn with options and a recommendation, both escapes, and Binds in the recommendation
+- [x] Gate check passes: full
 
 **Tests**: none (support file; its Scenarios are claimed by T16, which wires it into Specify)
 **Scenarios**: none - this task writes no tests
