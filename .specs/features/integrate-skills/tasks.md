@@ -666,8 +666,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: READ-01, READ-02, READ-03, READ-05, EDGE-01 (support file; proven through its consumers in T16 and T23)
 
 **Done when**:
-- [ ] the file holds the exact fd commands from D-grill-in-spec-driven.18, the `docs/adr` probe, and the filter from D-grill-in-spec-driven.17
-- [ ] Gate check passes: full
+- [x] the file holds the exact fd commands from D-grill-in-spec-driven.18, the `docs/adr` probe, and the filter from D-grill-in-spec-driven.17
+- [x] Gate check passes: full
 
 **Tests**: none (support file; its Scenarios are claimed by T16 and T23)
 **Scenarios**: none - this task writes no tests
