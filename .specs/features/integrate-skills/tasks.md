@@ -686,9 +686,9 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: FLOW-02
 
 **Done when**:
-- [ ] no file under `skills/setup-spec-driven/` mentions triage labels, ADRs or matt-pocock
-- [ ] the FLOW-02 test passes
-- [ ] Gate check passes: quick, scenarios, build, plan
+- [x] no file under `skills/setup-spec-driven/` mentions triage labels, ADRs or matt-pocock
+- [x] the FLOW-02 test passes
+- [x] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
 **Scenarios**: FLOW-02.S1

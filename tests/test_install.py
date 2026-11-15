@@ -99,5 +99,23 @@ class RetiredSkills(unittest.TestCase):
         self.assertIn("skipped implement: not installed by this repo", out)
 
 
+class NewSkills(unittest.TestCase):
+
+    def test_new_skills_installed(self):
+        """
+        Scenario: FLOW-02.S1 new skills installed
+          Given an empty temporary Claude config directory
+          When install.sh runs with that directory
+          Then skills/grilling/SKILL.md and skills/setup-spec-driven/SKILL.md exist in it
+        """
+        tmp, claude = sandbox(self)
+        self.assertEqual(os.listdir(claude), ["skills"])
+        self.assertEqual(os.listdir(os.path.join(claude, "skills")), [])
+        code, out = install(tmp, claude)
+        self.assertEqual(code, 0, out)
+        for name in ("grilling", "setup-spec-driven"):
+            self.assertTrue(os.path.isfile(os.path.join(claude, "skills", name, "SKILL.md")), out)
+
+
 if __name__ == "__main__":
     unittest.main()
