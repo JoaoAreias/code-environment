@@ -490,8 +490,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: REC-06, REC-08
 
 **Done when**:
-- [ ] no instruction in `design.md` writes to `STATE.md` or `docs/adr/`
-- [ ] Gate check passes: full
+- [x] no instruction in `design.md` writes to `STATE.md` or `docs/adr/`
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: REC-06.S1, REC-08.S1
