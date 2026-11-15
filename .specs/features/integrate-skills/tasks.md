@@ -530,9 +530,9 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: TKT-06, TKT-07
 
 **Done when**:
-- [ ] it states that publishing needs an explicit "publish tickets" after a Spec Review whose Findings all have Dispositions
-- [ ] `grep -n "ready-for-agent\|agent-grabbable" skills/spec-driven/references/tickets.md` finds nothing
-- [ ] Gate check passes: full
+- [x] it states that publishing needs an explicit "publish tickets" after a Spec Review whose Findings all have Dispositions
+- [x] `grep -n "ready-for-agent\|agent-grabbable" skills/spec-driven/references/tickets.md` finds nothing
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: TKT-06.S1, TKT-06.S2, TKT-06.S3, TKT-07.S1, TKT-07.S2
