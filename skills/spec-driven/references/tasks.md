@@ -1,8 +1,17 @@
 # Tasks
 
-**Goal**: Break into GRANULAR, ATOMIC tasks. Clear dependencies. Right tools. Sequential phase execution plan.
+**Goal**: Slice the Spec into day-sized **Tickets**, then break each Ticket into GRANULAR, ATOMIC **Tasks**. Clear dependencies. Right tools. Sequential phase execution plan.
 
-**Skip this phase when:** There are ≤3 obvious steps. In that case, tasks are implicit - go straight to Execute and list them inline in your implementation plan.
+**Tasks runs at every scope.** Every Spec gets a `tasks.md`: Small, Medium, Large and Complex alike. The phase is never skipped and Tasks are never left implicit, because the user reviews the work through `tasks.md` and the product team follows it through Tickets. `/spec-review` stops when `tasks.md` is missing. At Small scope the spec's `## Steps` list is only a first sketch; `tasks.md` is still written from it, with one Ticket that lists every Task.
+
+Two levels, cut top-down:
+
+- A **Ticket** is a slice of the Spec's work sized to about one day, demoable on its own, that the product team can follow on the issue tracker. It is made of Tasks and names the Tickets that block it.
+- A **Task** is an atomic unit of work inside exactly one Ticket, finished by exactly one commit.
+
+Tickets come first. You slice the Spec into Tickets, and only then cut each Ticket into Tasks; you never write a flat task list and group it into Tickets afterwards.
+
+`<skill-dir>` below is the `spec-driven` skill directory.
 
 ## Why Granular Tasks?
 
@@ -37,9 +46,9 @@
 
 ## Process
 
-### 1. Review Design
+### 1. Load the plan so far
 
-Read `.specs/features/[feature]/design.md` before creating tasks.
+Read `.specs/features/[feature]/spec.md` and the Grilling Record its `**Grilling Record**:` line links. Read `.specs/features/[feature]/design.md` when the feature has one (Medium scope and above always does; a Small feature usually does not). Then follow the read rule in [decisions.md](decisions.md) for the paths the Tasks will touch: active project-binding Decisions and legacy decision sources are Repo Standards every Task has to respect.
 
 ### 1.5. Generate the Test Coverage Matrix (ALWAYS)
 
@@ -75,9 +84,15 @@ Start from the Repo Standards already listed in the spec's `## Standards` sectio
 
 > Generated from codebase, project guidelines, and spec - confirm before Execute. Guidelines found: [list files, e.g. `AGENTS.md`, `jest.config.ts` - or "none - strong defaults applied"].
 
-| Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
-| ---------- | ------------------ | -------------------- | ---------------- | ----------- |
-| [layer] | [unit/integration/e2e/none] | [depth target for this layer] | [glob or path pattern] | [command] |
+| Code Layer | Required Test Type | Proof type | Coverage Expectation | Location Pattern | Run Command |
+| ---------- | ------------------ | ---------- | -------------------- | ---------------- | ----------- |
+| [layer] | [unit/integration/e2e/inspect/none] | [test/inspect/none] | [depth target for this layer] | [glob or path pattern, or where the Verifier records the proof] | [command] |
+
+**Proof type** says how the Scenarios of a layer are proven. It repeats the `**Proof**:` line each Scenario carries in the spec ([specify.md](specify.md) step 3.5):
+
+- `test`: a Behavior Test proves each Scenario. This is the default, and the Required Test Type says which kind of test.
+- `inspect`: the layer is something no test can exercise (a prompt or other skill prose, infrastructure code, configuration). The Required Test Type is also `inspect`. No test is written; after the last Task the Verifier reads the final files and records one row per Scenario in the Scenario-Anchored table of `validation.md`. Never choose `inspect` for a layer a test could exercise.
+- `none`: the layer has no Scenario of its own (the Required Test Type is `none`).
 
 **Coverage Expectation values** - set from guidelines first; use strong defaults when no guideline applies:
 
@@ -87,17 +102,19 @@ Start from the Repo Standards already listed in the spec's `## Standards` sectio
 | Route / controller / e2e / integration | All routes in scope: happy path + every listed edge case + error/failure paths |
 | Repository / data-access | Key query paths + error handling; infer from existing repo tests |
 | Entity / config / schema | none - build gate only |
+| Prompt / skill prose / IaC / configuration with `inspect` Scenarios | Every `inspect` Scenario checked once by the Verifier against the final files |
 
 These defaults may exceed the current repo's depth. That is intentional - they are a **target**, not a reflection of what already exists.
 
 *Example (filled in):*
 
-| Code Layer | Required Test Type | Coverage Expectation | Location Pattern | Run Command |
-| ---------- | ------------------ | -------------------- | ---------------- | ----------- |
-| Service | unit | All branches; 1:1 to spec ACs; all listed edge cases | `src/**/__test__/*.spec.ts` | `yarn test:unit` |
-| Repository | integration | Key query paths + error paths | `src/**/__test__/*.e2e-spec.ts` | `yarn test:e2e` |
-| Controller/Resolver | e2e | All routes: happy + edge + error | `src/**/__test__/*.e2e-spec.ts` | `yarn test:e2e` |
-| Entity / Config | none | - (build gate only) | - | build gate only |
+| Code Layer | Required Test Type | Proof type | Coverage Expectation | Location Pattern | Run Command |
+| ---------- | ------------------ | ---------- | -------------------- | ---------------- | ----------- |
+| Service | unit | test | All branches; 1:1 to spec ACs; all listed edge cases | `src/**/__test__/*.spec.ts` | `yarn test:unit` |
+| Repository | integration | test | Key query paths + error paths | `src/**/__test__/*.e2e-spec.ts` | `yarn test:e2e` |
+| Controller/Resolver | e2e | test | All routes: happy + edge + error | `src/**/__test__/*.e2e-spec.ts` | `yarn test:e2e` |
+| Entity / Config | none | none | - (build gate only) | - | build gate only |
+| Agent prompts (`prompts/*.md`) | inspect | inspect | Every `inspect` Scenario, one row each in `validation.md` | `validation.md` Scenario-Anchored table | build gate only |
 
 ## Gate Check Commands
 
@@ -118,14 +135,29 @@ These defaults may exceed the current repo's depth. That is intentional - they a
 | Code layer with "unit" requirement        | Unit tests written satisfying the layer's Coverage Expectation (e.g., 1:1 AC mapping for domain logic; all listed edge cases covered) + quick gate passes |
 | Code layer with "e2e" requirement         | E2E tests written satisfying the layer's Coverage Expectation (e.g., every route the task adds: happy path + edge + error paths) + full gate passes |
 | Code layer with "integration" requirement | Integration tests written satisfying the layer's Coverage Expectation + full gate passes                           |
+| Code layer with "inspect" requirement     | The `inspect` Scenarios the task's change delivers are named in its `Scenarios` field + gate check at the appropriate level. No test is written; the Verifier proves them after the last task |
 | Code layer with "none" requirement        | Gate check at appropriate level                                                                                    |
 
-### 2. Break Into Atomic Tasks
+### 2. Slice the Spec into Tickets, then cut each Ticket into Tasks
+
+**2.1 Slice the Spec into Tickets first.** Before you write a single Task, divide the Spec's acceptance criteria and Scenarios into Tickets. The slicing rules live in [tickets.md](tickets.md); in short:
+
+- **About one day each.** A Ticket is roughly one day of work for the person or agent building it. Much more than a day: split it. A few minutes: merge it into a neighbour.
+- **A vertical slice.** Each Ticket cuts a narrow but complete path through every layer it needs, and is demoable or verifiable on its own. A Ticket is never "the backend" or "the tests". A wide mechanical refactor is the one exception and is sequenced as expand-contract Tickets ([tickets.md](tickets.md)).
+- **Blocked-by edges.** Each Ticket names the Tickets that must be finished before it can start, or `none`. Edges point only to Tickets listed earlier.
+- **Complete cover.** Every acceptance criterion and every Scenario of the Spec is covered by a Ticket.
+- **Every scope gets Tickets.** A Small feature is less than a day of work, so it gets exactly one Ticket, `K1`, and every Task in `tasks.md` is listed in that Ticket. Medium, Large and Complex features get as many Tickets as they have day-sized slices.
+
+Write each Ticket into the `## Tickets` section of `tasks.md` in the markup shown in the template: a `### K<n>: <title>` heading with `**Delivers**`, `**Covers**`, `**Blocked by**` and `**Tasks**` fields. The `K` keeps Ticket IDs apart from Task IDs (`T<n>`).
+
+**2.2 Then cut each Ticket into atomic Tasks.** Take the Tickets in order and break each one into the Tasks that deliver it. Number Tasks `T1`, `T2`, ... across the whole file, Ticket by Ticket. Every Task belongs to exactly one Ticket: add its ID to that Ticket's `**Tasks**` field as soon as you write it. A Task that seems to belong to two Tickets is either two Tasks or a sign the Tickets are sliced wrong.
 
 **Task = ONE deliverable**. Examples:
 
 - ✅ "Create UserService interface" (one file, one concept)
 - ❌ "Implement user management" (too vague, multiple files)
+
+**Each Task claims only the Scenarios its own change delivers**, and they are Scenarios its Ticket covers. A Task whose Scenarios have proof type `test` writes their tests and names their IDs in `**Scenarios**`. A Task whose Scenarios have proof type `inspect` (prose, infrastructure code, configuration) says `**Tests**: inspect` and names those IDs in `**Scenarios**` the same way; it writes no test for them.
 
 ### 3. Define Dependencies
 
@@ -133,20 +165,20 @@ What MUST be done before this task can start?
 
 ### 4. Create Execution Plan
 
-Group tasks into ordered phases. Each phase depends on the ones before it; tasks execute sequentially within a phase.
+**One phase per Ticket.** Each Ticket is one Execution Plan phase, in the order the Tickets are listed: `### Phase 1: K1 [title]`, `### Phase 2: K2 [title]`, and so on. Each phase depends on the ones before it; tasks execute sequentially within a phase. Because a Ticket's `Blocked by` only names earlier Tickets, finishing the phases in order always respects the blocking edges.
 
 **Size phases near the worker budget.** During Execute, phases are packed into task-budgeted batches (~7 tasks per sub-agent, whole phases - see [sub-agents.md](sub-agents.md)). Because a batch cut may only land on a phase boundary, a phase that is much larger than the budget forces an over-sized worker. Keep each phase from greatly exceeding the budget:
 
-- If a phase would hold **more than ~10 tasks (≈1.5× the budget)**, split it into cohesive sub-phases at a genuine dependency/cohesion seam - not at an arbitrary task index.
+- If a phase would hold **more than ~10 tasks (≈1.5× the budget)**, its Ticket is almost certainly more than a day of work: split the Ticket into two Tickets at a genuine dependency/cohesion seam - not at an arbitrary task index - so each stays demoable on its own.
 - Only leave a phase over-sized when its tasks are one tight dependency chain that genuinely cannot be split. That is a legitimate (if fat) single-worker phase, not a smell.
 
 This keeps phase boundaries meaningful while letting the packing hit its target worker count.
 
 ### 5. Validate Before Presenting (MANDATORY)
 
-Before showing tasks to the user, run ALL three pre-approval checks. These are NOT optional - they are gates. If any check fails, restructure the tasks and re-run until all pass.
+Before showing tasks to the user, run ALL four pre-approval checks. These are NOT optional - they are gates. If any check fails, restructure the Tickets and tasks and re-run until all pass.
 
-**Deterministic backing (run it, do not eyeball it).** `python3 <skill-dir>/scripts/validate_tasks.py <tasks-path-or-feature>` enforces the structural half of these checks so they cannot drift: it flags a `Where` that names multiple files (granularity smell, Check 1), a diagram edge with no matching `Depends on` within a phase and vice-versa (Check 2), a task missing its `Tests` or `Gate` field, a `Tests: none` to confirm against the matrix (Check 3), and any dependency pointing to a later phase. A non-zero exit means restructure before presenting. The script checks structure; you still build the two tables below (the layer-to-test co-location judgment is yours). If no code-execution tool is available, run the checks by reading `tasks.md`.
+**Deterministic backing (run it, do not eyeball it).** `python3 <skill-dir>/scripts/validate_tasks.py <tasks-path-or-feature>` enforces the structural half of these checks so they cannot drift: it flags a `Where` that names multiple files (granularity smell, Check 1), a diagram edge with no matching `Depends on` within a phase and vice-versa (Check 2), a task missing its `Tests` or `Gate` field, a `Tests: none` to confirm against the matrix (Check 3), any dependency pointing to a later phase, and the Ticket rules (Check 4). A non-zero exit means restructure before presenting. The script checks structure; you still build the two tables below (the layer-to-test co-location judgment is yours). If no code-execution tool is available, run the checks by reading `tasks.md`.
 
 **Check 1: Task Granularity** - verify each task is atomic (see Granularity Check section).
 
@@ -154,11 +186,26 @@ Before showing tasks to the user, run ALL three pre-approval checks. These are N
 
 **Check 3: Test Co-location Validation** - verify every task's `Tests` field matches the **Test Coverage Matrix** generated above (see Test Co-location Validation section). Build the validation table and include it in the output.
 
+**Check 4: Tickets** - `validate_tasks.py` reads the `## Tickets` section and fails when any of these is true:
+
+- **The `## Tickets` section is missing.** It is a required section at every scope, next to `Test Coverage Matrix`, `Gate Check Commands`, `Execution Plan` and `Task Breakdown`.
+- **A task is listed in no Ticket.** Every `T<n>` in the Task Breakdown must appear in the `**Tasks**` field of some Ticket. This includes fix tasks appended later: a fix task passes when it is listed in a fix Ticket.
+- **A task is listed in more than one Ticket.** The error names the task and both Tickets.
+- **A Ticket's `**Blocked by**` names a Ticket that is not listed before it.** Blocking edges point backward only; `none` means the Ticket can start immediately.
+
+The script finds Tickets by their `### K<n>:` headings under the `## Tickets` heading and reads only the `**Tasks**` and `**Blocked by**` fields, so keep that markup exact. What it cannot check is yours to check by reading: each Ticket is about one day and demoable alone, `**Delivers**` states a user-visible outcome, and the `**Covers**` fields together name every acceptance criterion and Scenario of the Spec.
+
+For a **legacy plan** (the `spec.md` beside `tasks.md` has no `**Grilling Record**:` line, see [decisions.md](decisions.md) section 4) a missing `## Tickets` section and the Ticket rules are reported as warnings, not errors. A legacy plan is not rewritten to add Tickets; a native plan always has them.
+
 **Output both tables with the tasks** so the user can see the validation results. Any ❌ means you MUST restructure before presenting - do not show failing tasks to the user and ask them to approve.
 
 **Note on the generated matrix:** The two sections (`Test Coverage Matrix`, `Gate Check Commands`) are provisional - generated from codebase sampling or user input and included in this file for user review. They become authoritative at Execution Approval, after `/spec-review`. Agreeing to the task list itself is provisional and never starts Execute ([review.md](review.md)).
 
-**Scenario assignment:** every task that writes tests names the Scenario IDs it proves in a `**Scenarios**` field, and every Scenario in the spec is assigned to some task. `validate_tasks.py` enforces both.
+**Scenario assignment:** every task whose `Tests` field is not `none` names the Scenario IDs it proves or delivers in a `**Scenarios**` field (`test` and `inspect` Scenarios alike), and every Scenario in the spec is assigned to some task. `validate_tasks.py` enforces both.
+
+**Tickets are not published here.** The Tasks phase only writes Tickets into `tasks.md`. Creating issues on the tracker happens later and only when the user explicitly says "publish tickets", after a Spec Review whose Findings all have Dispositions ([tickets.md](tickets.md)). Never offer to publish as part of presenting the tasks, and never add a `**Tracker**` line yourself: publishing writes it.
+
+**Fix Tickets come later.** When a Verifier round or a Change Review produces fix tasks, they are appended to this file together with one new fix Ticket for that round ([tickets.md](tickets.md)). Every fix task belongs to a Ticket like any other Task.
 
 ### 6. ASK About MCPs and Skills
 
@@ -186,7 +233,9 @@ Implement these tasks with the `spec-driven` skill: **activate it by name and fo
 
 ---
 
-**Design**: `.specs/features/[feature]/design.md`
+**Spec**: `.specs/features/[feature]/spec.md`
+**Design**: `.specs/features/[feature]/design.md` (Medium scope and above; leave the line out when a Small feature has no design)
+**Grilling Record**: `.specs/decisions/[slug].md`
 **Status**: Draft | Approved | In Progress | Done
 
 ---
@@ -203,39 +252,58 @@ Implement these tasks with the `spec-driven` skill: **activate it by name and fo
 
 ---
 
+## Tickets
+
+<!-- Written in step 2.1, BEFORE any Task is cut. One block per Ticket, in dependency order. Each Ticket is about one day of work and demoable on its own. A Small feature has exactly one Ticket, K1, listing every Task. -->
+
+### K1: [Ticket title - the deliverable, in the user's terms]
+**Delivers**: [what works for the user once this Ticket is done - one or two sentences, no file paths]
+**Covers**: [FEAT]-01, [FEAT]-02 · [FEAT]-01.S1, [FEAT]-02.S1
+**Blocked by**: none
+**Tasks**: T1, T2, T3
+
+### K2: [Ticket title]
+**Delivers**: [user-visible outcome]
+**Covers**: [FEAT]-03, [FEAT]-04 · [FEAT]-03.S1, [FEAT]-04.S1
+**Blocked by**: K1
+**Tasks**: T4
+
+<!--
+Field rules:
+- Heading: `### K<n>: <title>`, numbered K1, K2, ... in listing order. `K` never collides with task IDs (`T<n>`).
+- **Delivers**: the outcome from the user's or product team's view.
+- **Covers**: the acceptance criterion IDs, then `·`, then the Scenario IDs this Ticket delivers. Together the Tickets cover every criterion and Scenario of the Spec.
+- **Blocked by**: `none`, or the IDs of Tickets listed EARLIER in this section. Never a later Ticket.
+- **Tasks**: the IDs of the Tasks that make up this Ticket. Every Task in the Task Breakdown is listed in exactly one Ticket.
+- **Tracker**: do not write this line. It is added by "publish tickets", right after the Ticket's issue is created, and holds the issue ID (see the tickets reference).
+- Fix Tickets are appended here later, one per Verifier round or Change Review, for example `### K3: Fix Verifier round 1` or `### K4: Fix CR1`, with the same four fields.
+-->
+
+---
+
 ## Execution Plan
 
-Phases are ordered and run sequentially - each phase completes before the next begins, and tasks within a phase execute in order.
+Each phase is one Ticket. Phases are ordered and run sequentially - each phase completes before the next begins, and tasks within a phase execute in order.
 
-### Phase 1: Foundation
-
-Tasks that must be done first, in order.
+### Phase 1: K1 [Ticket title]
 
 ```
 T1 → T2 → T3
 ```
 
-### Phase 2: Core Implementation
-
-Builds on the foundation.
+### Phase 2: K2 [Ticket title]
 
 ```
-T4 → T5 → T6 → T7
-```
-
-### Phase 3: Integration
-
-Bringing it all together.
-
-```
-T8 → T9
+T4
 ```
 
 ---
 
 ## Task Breakdown
 
-### T1: [Create X Interface]
+### Phase 1: K1 [Ticket title]
+
+#### T1: [Create X Interface]
 
 **What**: [One sentence: exact deliverable]
 **Where**: `src/path/to/file.ts`
@@ -254,18 +322,19 @@ T8 → T9
 - [ ] Types exported correctly
 - [ ] No TypeScript errors
 
-**Tests**: [unit/e2e/integration/none - from coverage matrix]
-**Scenarios**: [none - this task writes no tests]
+**Tests**: [unit/e2e/integration/inspect/none - from coverage matrix]
+**Scenarios**: [none - this task proves no Scenario]
 **Gate**: [quick/full/build - from gate check commands]
 
 ---
 
-### T2: [Implement Y Service]
+#### T2: [Implement Y Service]
 
 **What**: [Exact deliverable]
 **Where**: `src/services/YService.ts`
 **Depends on**: T1
 **Reuses**: `src/services/BaseService.ts` patterns
+**Requirement**: [FEAT]-01, [FEAT]-02
 
 **Tools**:
 
@@ -277,7 +346,7 @@ T8 → T9
 - [ ] Implements interface from T1
 - [ ] Handles error cases from design
 - [ ] Gate check passes: `[quick gate command from the Gate Check Commands above]`
-- [ ] `validate_scenarios.py [feature] --only [FEAT]-01.S1,[FEAT]-02.S1` passes
+- [ ] `validate_scenarios.py [feature] --only [FEAT]-01.S1,[FEAT]-02.S1` passes (only `test` Scenario IDs are passed to `--only`; never an `inspect` ID)
 - [ ] Test count: [N] tests pass (no silent deletions)
 
 **Tests**: unit
@@ -286,12 +355,13 @@ T8 → T9
 
 ---
 
-### T3: [Create Z Component]
+#### T3: [Write the Z agent prompt]
 
-**What**: [Exact deliverable]
-**Where**: `src/components/ZComponent.tsx`
-**Depends on**: T1
-**Reuses**: `src/components/BaseComponent.tsx`
+**What**: [Exact deliverable - a change no test can exercise]
+**Where**: `prompts/z-agent.md`
+**Depends on**: T2
+**Reuses**: `prompts/base-agent.md` structure
+**Requirement**: [FEAT]-03
 
 **Tools**:
 
@@ -300,24 +370,25 @@ T8 → T9
 
 **Done when**:
 
-- [ ] Component renders correctly
-- [ ] Handles props from interface
-- [ ] Follows existing component patterns
-- [ ] Gate check passes: `[quick gate command from the Gate Check Commands above]`
-- [ ] Test count: [N] tests pass (no silent deletions)
+- [ ] The prompt states every Then step of [FEAT]-03.S1 explicitly
+- [ ] Follows the structure of the existing prompts
+- [ ] Gate check passes: `[build gate command from the Gate Check Commands above]`
 
-**Tests**: unit
+**Tests**: inspect
 **Scenarios**: [FEAT]-03.S1
-**Gate**: quick
+**Gate**: build
 
 ---
 
-### T4: [Add A Feature to Y]
+### Phase 2: K2 [Ticket title]
+
+#### T4: [Add A Feature to Y]
 
 **What**: [Exact deliverable]
 **Where**: `src/services/YService.ts` (modify)
-**Depends on**: T2, T3
+**Depends on**: T3
 **Reuses**: Existing service patterns
+**Requirement**: [FEAT]-04
 
 **Tools**:
 
@@ -343,11 +414,10 @@ T8 → T9
 Visual representation of task ordering. Phases run in sequence, and tasks within a phase run in order:
 
 ```
-Phase 1 → Phase 2 → Phase 3
+Phase 1 (K1) → Phase 2 (K2)
 
 Phase 1:  T1 ------→ T2 ------→ T3
-Phase 2:  T4 ------→ T5 ------→ T6 ------→ T7
-Phase 3:  T8 ------→ T9
+Phase 2:  T4
 ```
 
 Execution is strictly sequential - there is no intra-phase parallelism. A single agent (or batch worker) works one task at a time, in order.
@@ -429,6 +499,7 @@ For each task, check: does the task create or modify a code layer that has a req
 
 - "Tested in another task" is NOT a valid justification for `Tests: none`. That is test deferral - the exact anti-pattern this validation prevents.
 - `Tests: none` is only valid when the coverage matrix says "none" for that code layer.
+- `Tests: inspect` is only valid when the coverage matrix gives that layer proof type `inspect`. The task still names its Scenarios; the Verifier proves them.
 - If a task creates MULTIPLE code layers (e.g., service + controller), use the HIGHEST test type required by any of them.
 - Any ❌ VIOLATION → restructure the task to include its required tests before proceeding.
 
@@ -445,13 +516,17 @@ Pick whichever option keeps tasks atomic and cohesive. The goal: no task produce
 
 ## Tips
 
-- **Phases are ordered** - Each phase completes before the next; tasks run in order within a phase
+- **Tickets first** - slice the Spec into day-sized, demoable Tickets, then cut each Ticket into Tasks; never group a flat task list afterwards
+- **Every scope has Tasks and Tickets** - a Small feature gets one Ticket that lists every Task
+- **One Task, one Ticket** - every Task is listed in exactly one Ticket's `Tasks` field
+- **Phases are ordered** - One phase per Ticket; each phase completes before the next; tasks run in order within a phase
 - **Reuses = Token saver** - Always reference existing code
 - **Tools per task** - MCPs and Skills prevent wrong approaches
 - **Dependencies are gates** - Clear what blocks what
 - **Done when = Testable** - If you can't verify it, rewrite it
 - **Requirement ID = Traceable** - Every task traces back to a spec requirement
-- **Scenarios = proposed tests** - Each task names the Scenarios it proves; the Spec Reviewer judges them before anything is built
+- **Scenarios = proposed proofs** - Each task names the Scenarios it proves (`test`) or delivers (`inspect`); the Spec Reviewer judges them before anything is built
+- **Publishing is separate** - Tickets reach the tracker only on an explicit "publish tickets" ([tickets.md](tickets.md))
 - **One commit per task** - Plan the commit message format in advance
 
 ---

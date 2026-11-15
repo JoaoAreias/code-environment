@@ -510,8 +510,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: TKT-08
 
 **Done when**:
-- [ ] the template's Tickets section matches what `validate_tasks.py` checks
-- [ ] Gate check passes: full
+- [x] the template's Tickets section matches what `validate_tasks.py` checks
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: TKT-08.S1
