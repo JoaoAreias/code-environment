@@ -551,8 +551,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: READ-06, GRILL-07, TKT-08 (entry-point wording)
 
 **Done when**:
-- [ ] SKILL.md mentions neither `context.md` as something to write nor the safety valve
-- [ ] Gate check passes: full
+- [x] SKILL.md mentions neither `context.md` as something to write nor the safety valve
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: READ-06.S1
