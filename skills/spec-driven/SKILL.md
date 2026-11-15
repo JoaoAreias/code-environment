@@ -51,7 +51,7 @@ A non-zero exit means STOP and fix before proceeding. Skip a script only when no
 | **Small**   | ≤3 files, one sentence   | Minimal `spec.md` (`Scope: Small`)                      | Skip                                            | Skip                          | Implement + verify inline                             |
 | **Medium**  | Clear feature, <10 tasks | Spec (brief)                                            | Skip - design inline                            | Skip - tasks implicit         | Implement + verify                                    |
 | **Large**   | Multi-component feature  | Full spec + requirement IDs                             | Architecture + components                       | Full breakdown + dependencies | Implement + verify per task                           |
-| **Complex** | Ambiguity, new domain    | Full spec + [discuss gray areas](references/discuss.md) | [Research](references/design.md) + architecture | Breakdown + phase plan        | Implement + [interactive UAT](references/validate.md) |
+| **Complex** | Ambiguity, new domain    | Full spec + [full grill and sweep](references/specify.md) | [Research](references/design.md) + architecture | Breakdown + phase plan        | Implement + [interactive UAT](references/validate.md) |
 
 **Rules:**
 
@@ -59,7 +59,7 @@ A non-zero exit means STOP and fix before proceeding. Skip a script only when no
 - **Every scope ends planning the same way:** the human runs `/spec-review`, records Dispositions, and gives Execution Approval - Small included
 - **Design is skipped** when the change is straightforward (no architectural decisions, no new patterns)
 - **Tasks is skipped** when there are ≤3 obvious steps (they become implicit in Execute)
-- **Discuss is triggered within Specify** when the agent detects ambiguous gray areas that need user input, or when the feature has any implicit-requirement dimension present (persistence/state, external calls, auth, payments, concurrency, state transitions)
+- **Specify is the grill** at every scope: one question per turn, written into a Grilling Record as it goes ([specify.md](references/specify.md)); there is no separate discuss step
 - **Interactive UAT is triggered within Execute** only for user-facing features with complex behavior
 
 **Safety valve:** Even when Tasks is skipped, Execute ALWAYS starts by listing atomic steps inline (see [implement.md](references/implement.md)). If that listing reveals >5 steps or complex dependencies, STOP and create a formal `tasks.md` - the Tasks phase was wrongly skipped.
@@ -74,7 +74,7 @@ A non-zero exit means STOP and fix before proceeding. Skip a script only when no
 └── features/           # Feature specifications
     └── [feature]/
         ├── spec.md         # Requirements with traceable IDs
-        ├── context.md      # User decisions for gray areas (only when discuss is triggered)
+        ├── context.md      # Legacy only: read when it exists, never written
         ├── design.md       # Architecture & components (only for Large/Complex)
         ├── tasks.md        # Atomic tasks with verification (only for Large/Complex)
         ├── spec-review-N.md    # Spec Reviewer report, one per run, with Dispositions
@@ -82,7 +82,7 @@ A non-zero exit means STOP and fix before proceeding. Skip a script only when no
         └── change-review-N.md  # Change Reviewer report, one per run, with Dispositions
 ```
 
-**Create artifacts lazily.** Write each file only when its phase actually produces content - never scaffold empty `context.md`, `design.md`, or `tasks.md` up front. An empty file signals a phase happened when it did not; absence is the correct state for a skipped phase. The deterministic scripts (`validate_spec.py`, `validate_tasks.py`, `validate_scenarios.py`, `check_commit.py`, `validate_state.py`, `lessons.py`, `prep_review.py`, `graph_queries.py`) ship inside this skill's own `scripts/` directory. `graphify-out/` (the code graph) stays out of git via `.git/info/exclude`.
+**Create artifacts lazily.** Write each file only when its phase actually produces content - never scaffold empty `design.md` or `tasks.md` up front. An empty file signals a phase happened when it did not; absence is the correct state for a skipped phase. The deterministic scripts (`validate_spec.py`, `validate_tasks.py`, `validate_scenarios.py`, `check_commit.py`, `validate_state.py`, `lessons.py`, `prep_review.py`, `graph_queries.py`) ship inside this skill's own `scripts/` directory. `graphify-out/` (the code graph) stays out of git via `.git/info/exclude`.
 
 ## Workflow
 
@@ -143,7 +143,7 @@ Full mechanics (worker payload, compact summary format, failure handling, contex
 | Trigger Pattern | Reference |
 |----------------|-----------|
 | Specify feature, define requirements | [specify.md](references/specify.md) |
-| Discuss feature, capture context, how should this work | [discuss.md](references/discuss.md) |
+| Discuss feature, how should this work | [specify.md](references/specify.md) |
 | Design feature, architecture | [design.md](references/design.md) |
 | Break into tasks, create tasks | [tasks.md](references/tasks.md) |
 | Implement task, build, execute | [implement.md](references/implement.md) |

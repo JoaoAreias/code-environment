@@ -707,8 +707,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: GRILL-01, GRILL-02, GRILL-03, GRILL-04, GRILL-07, GRILL-08, GRILL-10, REC-01, REC-02, REC-03, REC-04, REC-07, REC-10, READ-02, READ-03, READ-05, EDGE-02, PLAN-05
 
 **Done when**:
-- [ ] no reference in `skills/spec-driven/` points at `discuss.md` or tells an agent to write `context.md`
-- [ ] Gate check passes: full
+- [x] no reference in `skills/spec-driven/` points at `discuss.md` or tells an agent to write `context.md`
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: GRILL-01.S1, GRILL-02.S1, GRILL-03.S1, GRILL-04.S1, GRILL-07.S1, GRILL-08.S1, GRILL-10.S1, REC-01.S1, REC-01.S2, REC-02.S1, REC-03.S1, REC-04.S1, REC-07.S1, REC-10.S1, READ-02.S1, READ-03.S1, READ-05.S1, EDGE-02.S1, PLAN-05.S1
