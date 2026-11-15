@@ -645,9 +645,9 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: REC-01, REC-03, REC-04, REC-05 (support file; proven through Specify in T16 and review.md in T24)
 
 **Done when**:
-- [ ] no file in `skills/domain-modeling/` tells the agent to write an ADR or mark a Decision superseded
-- [ ] the template marks every section required and says a record covers the whole session
-- [ ] Gate check passes: full
+- [x] no file in `skills/domain-modeling/` tells the agent to write an ADR or mark a Decision superseded
+- [x] the template marks every section required and says a record covers the whole session
+- [x] Gate check passes: full
 
 **Tests**: none (support file; its Scenarios are claimed by T16 and T24)
 **Scenarios**: none - this task writes no tests
