@@ -613,8 +613,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: FLOW-03, READ-01, EDGE-01, PLAN-03
 
 **Done when**:
-- [ ] the description no longer offers to build features on its own
-- [ ] Gate check passes: full
+- [x] the description no longer offers to build features on its own
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: FLOW-03.S1, READ-01.S1, EDGE-01.S1, EDGE-01.S2, EDGE-01.S3, PLAN-03.S1
