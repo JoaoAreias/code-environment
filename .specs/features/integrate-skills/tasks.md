@@ -593,8 +593,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: FLOW-05, TKT-09
 
 **Done when**:
-- [ ] no instruction in `implement.md` runs `/code-review` or edits `context.md`
-- [ ] Gate check passes: full
+- [x] no instruction in `implement.md` runs `/code-review` or edits `context.md`
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: FLOW-05.S1, TKT-09.S1
