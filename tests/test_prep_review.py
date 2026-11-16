@@ -207,5 +207,22 @@ class ForeignPlans(unittest.TestCase):
         self.assertIn("write the report to `.specs/reviews/kiro-specs-payments/spec-review-1.md`", out)
 
 
+
+class FeaturePaths(unittest.TestCase):
+
+    def test_a_path_into_a_feature_folder_names_the_feature(self):
+        """
+        Scenario: PLAN-06.S1 a path into a feature folder names the feature
+          Given a fixture repository with a native feature demo
+          When prep_review.py spec .specs/features/demo/spec.md runs
+          Then it exits 0
+          And its output names the feature demo and the report path .specs/features/demo/spec-review-1.md
+        """
+        repo = fixtures.build_repo(self, *READY)
+        code, out = prep(repo, ".specs/features/demo/spec.md")
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r"(?m)^- Feature: `demo` ")
+        self.assertIn("write the report to `.specs/features/demo/spec-review-1.md`", out)
+
 if __name__ == "__main__":
     unittest.main()

@@ -814,8 +814,8 @@ T32 → T33 → T34
 **Fixes**: CR1-F1
 
 **Done when**:
-- [ ] the Scenario test passes
-- [ ] Gate check passes: quick, scenarios, build, plan
+- [x] the Scenario test passes
+- [x] Gate check passes: quick, scenarios, build, plan
 
 **Tests**: integration
 **Scenarios**: PLAN-06.S1

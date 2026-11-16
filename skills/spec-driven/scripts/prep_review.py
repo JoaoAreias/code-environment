@@ -232,12 +232,23 @@ def header(lines, title, root):
     lines.append(f"- spec-driven skill: `{SKILL_DIR}` (scripts in `scripts/`, references in `references/`)")
 
 
+def feature_in_path(root, target):
+    """Feature name for a path inside .specs/features/<f>/ (the folder or any file in it), else None."""
+    if not target:
+        return None
+    for path in (os.path.realpath(target), os.path.realpath(os.path.join(root, target))):
+        parts = os.path.relpath(path, os.path.realpath(features_dir(root))).split(os.sep)
+        if parts[0] not in (".", "..") and os.path.exists(path):
+            return parts[0]
+    return None
+
+
 def foreign_plan(root, target):
     """Repo-relative path of a foreign plan: `target` names a file or folder outside .specs/features/.
 
     Returns None when `target` is empty or names a feature (by name or by a path inside its folder).
     """
-    if not target or target in list_features(root):
+    if not target or target in list_features(root) or feature_in_path(root, target):
         return None
     path = next((p for p in (os.path.realpath(target), os.path.realpath(os.path.join(root, target))) if os.path.exists(p)), None)
     if path is None:
@@ -326,7 +337,7 @@ def foreign_target(root, rel):
 def prep_spec(args, root):
     foreign = foreign_plan(root, args.feature)
     name, rdir, intro, decisions, checks = (foreign_target(root, foreign) if foreign
-                                            else feature_target(root, pick_feature(root, args.feature)))
+                                            else feature_target(root, pick_feature(root, feature_in_path(root, args.feature) or args.feature)))
     reviewed = snapshot(root, [os.path.relpath(rdir, root) + "/", *SHARED_PLAN_PATHS], name)
     graph = refresh_graph(root)
     n, report, prev = next_run(rdir, "spec-review")
