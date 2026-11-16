@@ -633,9 +633,9 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: REC-05, TKT-09
 
 **Done when**:
-- [ ] step order: record Dispositions, rewrite Decisions, commit, distill Lessons
-- [ ] neither file mentions Amendments or superseded Decisions
-- [ ] Gate check passes: full
+- [x] step order: record Dispositions, rewrite Decisions, commit, distill Lessons
+- [x] neither file mentions Amendments or superseded Decisions
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: REC-05.S1, REC-05.S2, REC-05.S3, TKT-09.S2

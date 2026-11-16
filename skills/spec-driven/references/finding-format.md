@@ -6,7 +6,8 @@ Both reviewers write one new file per run, using this layout. A Finding must sta
 # Spec Review SR2 · <feature>            <!-- or: # Change Review CR1 · <feature or branch> -->
 
 - **Reviewed**: commit `abc1234`          <!-- Change Review: `base...head` -->
-- **Inputs read**: spec.md, design.md, tasks.md, STATE.md (AD-003, AD-007), spec-review-1.md
+- **Inputs read**: spec.md, design.md, tasks.md, `.specs/decisions/csv-export.md` (D-csv-export.1 to .9), `.specs/decisions/money.md` (D-money.1), spec-review-1.md    <!-- name every Grilling Record and legacy decision source you read -->
+- **Outside sources**: `docs/rfcs/0007-ledger.md`    <!-- planning material from other flows that discovery found and that bears on this review; or: none -->
 - **Evidence**: graph refreshed 2026-10-09 14:02 · Sonar: analysis 2026-10-09 13:40 of `shop-api` (current) · Scenario check: 0 errors
 - **Reviewer Lessons applied**: L-004 (1 Finding suppressed)    <!-- or: none -->
 
@@ -61,8 +62,11 @@ Both reviewers write one new file per run, using this layout. A Finding must sta
   - **Cosmetic**: wording and format.
 - **Confidence**: `high` when you read the code or ran the query that proves it; `medium` when one link is inferred; `low` when it is a suspicion. A low-confidence Finding names the check that would settle it.
 - **Evidence** is quoted, located (`file:line`, Spec ID, Scenario ID, query and result, Sonar rule and issue key) and reproducible. No location, no Finding.
+- **Decisions are cited by ID.** A Finding about a Decision names it by its ID (`D-csv-export.3`) and the Grilling Record that holds it, in **Where**. A Finding that the plan dropped or contradicts an answer cites both places: the Session path question in the record and the Spec criterion. A Finding that a Change contradicts a Decision cites the Decision ID and the code's `file:line`. A decision from a legacy decision source is cited by its file name or its entry number.
+- **Inputs read** lists the Grilling Records and legacy decision sources you opened through the read rule ([decisions.md](decisions.md)), so the human can see what the review was judged against.
 - **Would change my mind** names one checkable fact. It is the target when the human grills the Finding.
-- **Disposition** stays `_(pending)_`. Only the main session edits it, after the human decides: `accept` or `reject: <reason>`, plus an optional `**Grill notes**:` line.
+- **Disposition** stays `_(pending)_`. Only the main session edits it, after the human decides: `accept` or `reject: <reason>`, plus an optional `**Grill notes**:` line. When an accepted Finding changes a Decision, the main session also rewrites that Decision in its Grilling Record ([review.md](review.md)); the reviewer never edits a record.
+- **The report path** is the one the Review context names. For a feature it is inside the feature folder; for a foreign plan it is `.specs/reviews/<plan slug>/spec-review-<n>.md`, and the plan itself is never edited.
 - A dimension you could not assess is marked `not assessable (<why>)`, never left out and never guessed.
 
 ## Final message to the main session
