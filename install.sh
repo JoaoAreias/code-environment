@@ -10,10 +10,11 @@ CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 OPENCODE_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 SETTINGS="$CLAUDE_DIR/settings.json"
 # Skills this repo no longer ships, one per line as `name|phrase`. The phrase is
-# text from the SKILL.md this repo shipped under that name. The skills folder is
+# text from the SKILL.md this repo shipped under that name (for tlc-spec-driven,
+# the upstream Tech Lead's Club copy that spec-driven replaced). The skills folder is
 # shared with other sources, so an installed folder is removed only when it is a
 # real folder (not a symlink) whose SKILL.md contains the phrase.
-RETIRED_SKILLS="tlc-spec-driven|name: tlc-spec-driven
+RETIRED_SKILLS="tlc-spec-driven|Tech Lead's Club - Spec-Driven Development
 ask-matt|A router over the skills in this repo.
 implement|Use /tdd where possible, at pre-agreed seams.
 to-spec|Do NOT interview the user; just synthesize what you already know.
