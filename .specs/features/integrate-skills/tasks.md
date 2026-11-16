@@ -674,8 +674,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: REV-06
 
 **Done when**:
-- [ ] the agent no longer reads `AD-NNN` as a primary source
-- [ ] Gate check passes: full
+- [x] the agent no longer reads `AD-NNN` as a primary source
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: REV-06.S1
