@@ -7,7 +7,9 @@ description: Diagnosis loop for hard bugs and performance regressions. Use when 
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring the codebase, read `CONTEXT.md` (if it exists) to get a clear mental model of the relevant modules, and check ADRs in the area you're touching.
+This skill finds the cause of a bug. It does not fix it. When the root cause is confirmed, Phase 5 hands the repro, the root cause and the seam to spec-driven, which is the only path that builds code.
+
+When exploring the codebase, read `CONTEXT.md` (if it exists) to get a clear mental model of the relevant modules, and read the Decisions that bind the area you're touching. To find them, follow the read rule in spec-driven's `references/decisions.md` (`../spec-driven/references/decisions.md` from this skill's directory). That file is the one source of the rule: read it completely and run its steps in order. A diagnosis has no feature, so open the `active` Grilling Records that bind the project where you work, and check the legacy decision sources it lists.
 
 ## Redact
 
@@ -111,28 +113,57 @@ Tool preference:
 
 **Perf branch.** For performance regressions, logs are usually wrong. Instead: establish a baseline measurement (timing harness, `performance.now()`, profiler, query plan), then bisect. Measure first, fix second.
 
-## Phase 5: Fix + regression test
+## Phase 5: Hand off to a Small Specify
 
-Write the regression test **before the fix**, but only if there is a **correct seam** for it.
+The diagnosis ends here. When a probe from Phase 4 confirms one hypothesis from Phase 3, you have a root cause. **Do not apply the fix, and do not write the regression test.** A bug fix is a Change like any other, and every Change is built through spec-driven: a Small spec, `tasks.md`, a human-run `/spec-review`, Execution Approval, and only then Execute. This holds for a one-line fix, and it holds when the user says "just fix it": answer that the fix goes through spec-driven and that a Small Specify is the short way there.
 
-A correct seam is one where the test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow (single-caller test when the bug needs multiple callers, unit test that can't replicate the chain that triggered the bug), a regression test there gives false confidence.
+Do the four steps below in order.
 
-**If no correct seam exists, that itself is the finding.** Note it. The codebase architecture is preventing the bug from being locked down. Flag this for the next phase.
+### 1. State the root cause
 
-If a correct seam exists:
+Write it in one or two sentences that name the file and line, the hypothesis that was confirmed, and the probe result that confirmed it. For example: "`format_date` in `src/export/dates.py:41` converts the timestamp to UTC before taking the date, so an order placed after 21:00 local time is exported with the next day's date. Confirmed: pinning the timezone to UTC makes the loop go green."
 
-1. Turn the minimised repro into a failing test at that seam.
-2. Watch it fail.
-3. Apply the fix.
-4. Watch it pass.
-5. Re-run the Phase 1 feedback loop against the original (un-minimised) scenario.
+A hypothesis that only looks likely is not a root cause. If no probe has confirmed it, go back to Phase 4.
 
-## Phase 6: Cleanup
+### 2. Name the seam
 
-Required before declaring done:
+The seam is where the regression test for this bug belongs. A correct seam is one where a test exercises the **real bug pattern** as it occurs at the call site. If the only available seam is too shallow (a single-caller test when the bug needs multiple callers, a unit test that can't replicate the chain that triggered the bug), a regression test there gives false confidence.
 
-- [ ] Original repro no longer reproduces (re-run the Phase 1 loop)
-- [ ] Regression test passes (or absence of seam is documented)
-- [ ] All `[DEBUG-...]` instrumentation removed (`grep` the prefix)
-- [ ] Throwaway prototypes deleted (or moved to a clearly-marked debug location)
-- [ ] The hypothesis that turned out correct is stated in the commit / PR message, so the next debugger learns
+Name the interface and the file it lives in. You are naming it, not writing a test at it: inside Execute, `tdd` writes the Scenario's test at that seam and sees it fail before any code changes.
+
+**If no correct seam exists, that itself is the finding.** Say so in the hand-off: the codebase architecture is preventing the bug from being locked down, and the spec has to decide what to do about it.
+
+### 3. Leave every production file unchanged
+
+Before you hand off, bring the working tree back to where the diagnosis found it:
+
+- [ ] All `[DEBUG-...]` instrumentation is removed (`grep` the prefix).
+- [ ] Every other edit you made to a production file while probing is reverted, including any experimental change that made the loop go green. That change was a probe, not the fix.
+- [ ] Throwaway harnesses and prototypes are deleted, or moved to a clearly-marked debug location.
+- [ ] `git status` and `git diff` show no change to any production file. Check this; do not assume it.
+- [ ] Nothing is committed.
+
+Keep the Phase 1 loop: the one command, and the script or test file behind it if there is one. It is the repro, it is not production code, and it must still go red. Leave it uncommitted.
+
+### 4. Start the Small Specify
+
+Load `spec-driven` by name with your harness's skill tool (the Skill tool in Claude Code, the `skill` tool in opencode), or read `../spec-driven/SKILL.md` from this skill's directory when the harness cannot load a skill by name. Start its Specify phase at **Small** scope and give it these three things as input:
+
+1. **The repro.** The one command from Phase 1, the minimised scenario from Phase 2, the user's exact symptom, and the redacted red output.
+2. **The root cause**, as stated in step 1.
+3. **The seam**, as named in step 2, or the finding that no correct seam exists.
+
+**The repro is the spec's first Scenario.** Write the minimised scenario as Given and When, and the behavior the user expected, which is the opposite of the symptom, as Then. For the example above:
+
+```gherkin
+Scenario: an order placed late in the evening keeps its local date
+  Given an order placed at 2026-03-14 22:30 in America/Sao_Paulo
+  When the order is exported
+  Then the exported date is 2026-03-14
+```
+
+Specify gives the Scenario its ID. The root cause goes into the spec's Problem Statement and into the Context of the Grilling Record, so the next debugger learns which hypothesis was correct. The seam tells Specify and `tdd` where the Scenario is observed.
+
+Specify treats what the diagnosis established as given and does not ask it again. It still does its own reading and asks about what the diagnosis did not decide, such as how the fix should behave in neighbouring cases. If the fix turns out to be larger than a Small change, spec-driven's own sizing rules raise the scope; you still start from Small.
+
+From here on, spec-driven's rules apply and this skill has nothing more to do. The fix is written in Execute, after Execution Approval, and the Phase 1 loop going green is how Execute knows the original symptom is gone.

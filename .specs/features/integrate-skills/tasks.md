@@ -696,8 +696,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: FLOW-04
 
 **Done when**:
-- [ ] no instruction in the skill applies a fix
-- [ ] Gate check passes: full
+- [x] no instruction in the skill applies a fix
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: FLOW-04.S1
