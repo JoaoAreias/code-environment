@@ -1199,62 +1199,62 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
 | Requirement ID | Story | Phase | Status |
 | --- | --- | --- | --- |
-| GRILL-01 | P1: One grill inside Specify | Tasks | Pending |
-| GRILL-02 | P1: One grill inside Specify | Tasks | Pending |
-| GRILL-03 | P1: One grill inside Specify | Tasks | Pending |
-| GRILL-04 | P1: One grill inside Specify | Tasks | Pending |
-| GRILL-05 | P1: One grill inside Specify | Tasks | Pending |
-| GRILL-06 | P1: One grill inside Specify | Tasks | Pending |
-| GRILL-07 | P1: One grill inside Specify | Tasks | Pending |
-| GRILL-08 | P1: One grill inside Specify | Tasks | Pending |
-| GRILL-09 | P1: One grill inside Specify | Tasks | Pending |
-| GRILL-10 | P1: One grill inside Specify | Tasks | Pending |
-| REC-01 | P1: Complete Grilling Records | Tasks | Pending |
-| REC-02 | P1: Complete Grilling Records | Tasks | Pending |
-| REC-03 | P1: Complete Grilling Records | Tasks | Pending |
-| REC-04 | P1: Complete Grilling Records | Tasks | Pending |
-| REC-05 | P1: Complete Grilling Records | Tasks | Pending |
-| REC-06 | P1: Complete Grilling Records | Tasks | Pending |
-| REC-07 | P1: Complete Grilling Records | Tasks | Pending |
-| REC-08 | P1: Complete Grilling Records | Tasks | Pending |
-| REC-09 | P1: Complete Grilling Records | Tasks | Pending |
-| REC-10 | P1: Complete Grilling Records | Tasks | Pending |
-| READ-01 | P1: One read rule and repo discovery | Tasks | Pending |
-| READ-02 | P1: One read rule and repo discovery | Tasks | Pending |
-| READ-03 | P1: One read rule and repo discovery | Tasks | Pending |
-| READ-04 | P1: One read rule and repo discovery | Tasks | Pending |
-| READ-05 | P1: One read rule and repo discovery | Tasks | Pending |
-| READ-06 | P1: One read rule and repo discovery | Tasks | Pending |
-| REV-01 | P1: Reviews see the records | Tasks | Pending |
-| REV-02 | P1: Reviews see the records | Tasks | Pending |
-| REV-03 | P1: Reviews see the records | Tasks | Pending |
-| REV-04 | P1: Reviews see the records | Tasks | Pending |
-| REV-05 | P1: Reviews see the records | Tasks | Pending |
-| REV-06 | P1: Reviews see the records | Tasks | Pending |
-| TKT-01 | P1: Tasks and Tickets at every scope | Tasks | Pending |
-| TKT-02 | P1: Tasks and Tickets at every scope | Tasks | Pending |
-| TKT-03 | P1: Tasks and Tickets at every scope | Tasks | Pending |
-| TKT-04 | P1: Tasks and Tickets at every scope | Tasks | Pending |
-| TKT-05 | P1: Tasks and Tickets at every scope | Tasks | Pending |
-| TKT-06 | P1: Tasks and Tickets at every scope | Tasks | Pending |
-| TKT-07 | P1: Tasks and Tickets at every scope | Tasks | Pending |
-| TKT-08 | P1: Tasks and Tickets at every scope | Tasks | Pending |
-| TKT-09 | P1: Tasks and Tickets at every scope | Tasks | Pending |
-| PLAN-01 | P1: Plans from older rules and other flows | Tasks | Pending |
-| PLAN-02 | P1: Plans from older rules and other flows | Tasks | Pending |
-| PLAN-03 | P1: Plans from older rules and other flows | Tasks | Pending |
-| PLAN-04 | P1: Plans from older rules and other flows | Tasks | Pending |
-| PLAN-05 | P1: Plans from older rules and other flows | Tasks | Pending |
-| PROOF-01 | P1: Proof for changes a test cannot exercise | Tasks | Pending |
-| PROOF-02 | P1: Proof for changes a test cannot exercise | Tasks | Pending |
-| FLOW-01 | P2: One implementation path | Tasks | Pending |
-| FLOW-02 | P2: One implementation path | Tasks | Pending |
-| FLOW-03 | P2: One implementation path | Tasks | Pending |
-| FLOW-04 | P2: One implementation path | Tasks | Pending |
-| FLOW-05 | P2: One implementation path | Tasks | Pending |
-| FLOW-06 | P2: One implementation path | Tasks | Pending |
-| EDGE-01 | Edge case | Tasks | Pending |
-| EDGE-02 | Edge case | Tasks | Pending |
+| GRILL-01 | P1: One grill inside Specify | Execute | Verified |
+| GRILL-02 | P1: One grill inside Specify | Execute | Verified |
+| GRILL-03 | P1: One grill inside Specify | Execute | Verified |
+| GRILL-04 | P1: One grill inside Specify | Execute | Verified |
+| GRILL-05 | P1: One grill inside Specify | Execute | Verified |
+| GRILL-06 | P1: One grill inside Specify | Execute | Verified |
+| GRILL-07 | P1: One grill inside Specify | Execute | Verified |
+| GRILL-08 | P1: One grill inside Specify | Execute | Verified |
+| GRILL-09 | P1: One grill inside Specify | Execute | Verified |
+| GRILL-10 | P1: One grill inside Specify | Execute | Verified |
+| REC-01 | P1: Complete Grilling Records | Execute | Verified |
+| REC-02 | P1: Complete Grilling Records | Execute | Verified |
+| REC-03 | P1: Complete Grilling Records | Execute | Verified |
+| REC-04 | P1: Complete Grilling Records | Execute | Verified |
+| REC-05 | P1: Complete Grilling Records | Execute | Verified |
+| REC-06 | P1: Complete Grilling Records | Execute | Verified |
+| REC-07 | P1: Complete Grilling Records | Execute | Verified |
+| REC-08 | P1: Complete Grilling Records | Execute | Verified |
+| REC-09 | P1: Complete Grilling Records | Execute | Verified |
+| REC-10 | P1: Complete Grilling Records | Execute | Verified |
+| READ-01 | P1: One read rule and repo discovery | Execute | Verified |
+| READ-02 | P1: One read rule and repo discovery | Execute | Verified |
+| READ-03 | P1: One read rule and repo discovery | Execute | Verified |
+| READ-04 | P1: One read rule and repo discovery | Execute | Verified |
+| READ-05 | P1: One read rule and repo discovery | Execute | Verified |
+| READ-06 | P1: One read rule and repo discovery | Execute | Verified |
+| REV-01 | P1: Reviews see the records | Execute | Verified |
+| REV-02 | P1: Reviews see the records | Execute | Verified |
+| REV-03 | P1: Reviews see the records | Execute | Verified |
+| REV-04 | P1: Reviews see the records | Execute | Verified |
+| REV-05 | P1: Reviews see the records | Execute | Verified |
+| REV-06 | P1: Reviews see the records | Execute | Verified |
+| TKT-01 | P1: Tasks and Tickets at every scope | Execute | Verified |
+| TKT-02 | P1: Tasks and Tickets at every scope | Execute | Verified |
+| TKT-03 | P1: Tasks and Tickets at every scope | Execute | Verified |
+| TKT-04 | P1: Tasks and Tickets at every scope | Execute | Verified |
+| TKT-05 | P1: Tasks and Tickets at every scope | Execute | Verified |
+| TKT-06 | P1: Tasks and Tickets at every scope | Execute | Verified |
+| TKT-07 | P1: Tasks and Tickets at every scope | Execute | Verified |
+| TKT-08 | P1: Tasks and Tickets at every scope | Execute | Verified |
+| TKT-09 | P1: Tasks and Tickets at every scope | Execute | Verified |
+| PLAN-01 | P1: Plans from older rules and other flows | Execute | Verified |
+| PLAN-02 | P1: Plans from older rules and other flows | Execute | Verified |
+| PLAN-03 | P1: Plans from older rules and other flows | Execute | Verified |
+| PLAN-04 | P1: Plans from older rules and other flows | Execute | Verified |
+| PLAN-05 | P1: Plans from older rules and other flows | Execute | Verified |
+| PROOF-01 | P1: Proof for changes a test cannot exercise | Execute | Verified |
+| PROOF-02 | P1: Proof for changes a test cannot exercise | Execute | Verified |
+| FLOW-01 | P2: One implementation path | Execute | Verified |
+| FLOW-02 | P2: One implementation path | Execute | Verified |
+| FLOW-03 | P2: One implementation path | Execute | Verified |
+| FLOW-04 | P2: One implementation path | Execute | Verified |
+| FLOW-05 | P2: One implementation path | Execute | Verified |
+| FLOW-06 | P2: One implementation path | Execute | Verified |
+| EDGE-01 | Edge case | Execute | Verified |
+| EDGE-02 | Edge case | Execute | Verified |
 
 **Coverage:** 56 total, 56 mapped to tasks, 0 unmapped.
 
