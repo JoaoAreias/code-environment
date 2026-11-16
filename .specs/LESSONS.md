@@ -56,6 +56,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: .specs/features/integrate-skills/spec-review-2.md SR2-F3 (tests)
 - last seen: 2026-11-14T17:26:43Z
 
+### L-008 - Name shared per-feature files under .specs so two branches cannot pick the same name silently
+- audience: author · signal: `change_review_finding` · recurrence: 1 feature(s) · scope: `.specs` · harmful: 0
+- features: integrate-skills
+- evidence: .specs/features/integrate-skills/change-review-1.md CR1-F2 (.specs)
+- last seen: 2026-11-16T20:11:16Z
+
+### L-009 - Validators read markdown table cells by header name, never by position
+- audience: author · signal: `change_review_finding` · recurrence: 1 feature(s) · scope: `scripts` · harmful: 0
+- features: integrate-skills
+- evidence: .specs/features/integrate-skills/change-review-1.md CR1-F5 (scripts)
+- last seen: 2026-11-16T20:11:16Z
+
+### L-010 - Do not raise behaviour the Change did not introduce or alter as a Finding of that Change; name it as a separate feature instead
+- audience: reviewer · signal: `review_rejection` · recurrence: 1 feature(s) · scope: `install.sh` · harmful: 0
+- features: integrate-skills
+- evidence: .specs/features/integrate-skills/change-review-1.md CR1-F4 (install.sh)
+- last seen: 2026-11-16T20:11:16Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

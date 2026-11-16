@@ -914,7 +914,7 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
    **Proof**: inspect
 
-4. **PLAN-04**: WHEN `prep_review.py spec` is given the path of a foreign plan, a file or a folder, THEN it SHALL skip the structural validators, say why, name the report path `.specs/reviews/<repo-relative path as a slug>/spec-review-<n>.md` with run numbers counted per plan, treat a folder as one plan made of every markdown file in it, and leave the foreign files unchanged.
+4. **PLAN-04**: WHEN `prep_review.py spec` is given the path of a foreign plan, a file or a folder, THEN it SHALL skip the structural validators, say why, name the report path `.specs/reviews/<repo-relative path as a slug>/spec-review-<n>.md` with run numbers counted per plan (a short hash of the path is appended to the slug when that folder already belongs to a different plan path), treat a folder as one plan made of every markdown file in it, and leave the foreign files unchanged.
 
    ```gherkin
    Scenario: PLAN-04.S1 review a teammate's plan
@@ -950,6 +950,17 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
    **Proof**: test
 
+   ```gherkin
+   Scenario: PLAN-04.S4 two plans whose slugs collide keep separate histories
+     Given a fixture repository with committed docs/042_billing.md and docs/042-billing.md
+     And .specs/reviews/docs-042-billing/ already holds a spec-review-1.md made for docs/042_billing.md
+     When prep_review.py spec docs/042-billing.md runs
+     Then its output names a report path under .specs/reviews/docs-042-billing-<hash>/ whose hash comes from the path docs/042-billing.md
+     And its output says there is no previous run
+   ```
+
+   **Proof**: test
+
 5. **PLAN-05**: WHEN the user asks to build from a foreign plan THEN Specify SHALL take it as input, ask only about its gaps, and write a native `spec.md` that links the source with its commit or date and copies none of it.
 
    ```gherkin
@@ -962,6 +973,18 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
    ```
 
    **Proof**: inspect
+
+6. **PLAN-06**: WHEN `prep_review.py spec` is given a path inside `.specs/features/<f>/` THEN it SHALL review feature `<f>` exactly as if the feature name had been given.
+
+   ```gherkin
+   Scenario: PLAN-06.S1 a path into a feature folder names the feature
+     Given a fixture repository with a native feature demo
+     When prep_review.py spec .specs/features/demo/spec.md runs
+     Then it exits 0
+     And its output names the feature demo and the report path .specs/features/demo/spec-review-1.md
+   ```
+
+   **Proof**: test
 
 **Independent Test**: Run both validators and `prep_review.py` on legacy and foreign fixtures; run Specify from a fixture RFC.
 
@@ -1243,8 +1266,9 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 | PLAN-01 | P1: Plans from older rules and other flows | Execute | Verified |
 | PLAN-02 | P1: Plans from older rules and other flows | Execute | Verified |
 | PLAN-03 | P1: Plans from older rules and other flows | Execute | Verified |
-| PLAN-04 | P1: Plans from older rules and other flows | Execute | Verified |
+| PLAN-04 | P1: Plans from older rules and other flows | Tasks | Pending |
 | PLAN-05 | P1: Plans from older rules and other flows | Execute | Verified |
+| PLAN-06 | P1: Plans from older rules and other flows | Tasks | Pending |
 | PROOF-01 | P1: Proof for changes a test cannot exercise | Execute | Verified |
 | PROOF-02 | P1: Proof for changes a test cannot exercise | Execute | Verified |
 | FLOW-01 | P2: One implementation path | Execute | Verified |
@@ -1262,7 +1286,7 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 
 ## Success Criteria
 
-- [ ] `python3 -m unittest discover -s tests` passes all 31 `test` Scenarios, using the real `graphify`.
+- [ ] `python3 -m unittest discover -s tests` passes all 33 `test` Scenarios, using the real `graphify`.
 - [ ] the Scenario-Anchored table in `validation.md` holds exactly one PASS row for each of the 50 `inspect` Scenarios, and `validate_scenarios.py integrate-skills` exits 0.
 - [ ] `grep -rn "docs/adr" skills agents` finds only legacy-read instructions.
 - [ ] `grep -rn "ready-for-agent\|agent-grabbable" skills agents` finds nothing.

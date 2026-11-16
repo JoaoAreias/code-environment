@@ -90,6 +90,12 @@ Before T4 lands, `validate_spec.py` reports one expected error on this spec (the
 **Blocked by**: K6
 **Tasks**: T27, T28, T29, T30, T31
 
+### K8: Fix CR1
+**Delivers**: fixes for CR1-F1, CR1-F2 and CR1-F5: a path into a feature folder reviews that feature, two foreign plans whose slugs collide keep separate report folders, and `validate_spec.py` reads the traceability table by header name.
+**Covers**: PLAN-04, PLAN-06 · PLAN-04.S4, PLAN-06.S1
+**Blocked by**: K2, K3
+**Tasks**: T32, T33, T34
+
 ---
 
 ## Execution Plan
@@ -136,6 +142,12 @@ T22 → T23 → T24 → T25 → T26
 
 ```
 T27 → T28 → T29 → T30 → T31
+```
+
+### Phase 8: K8 Fix CR1
+
+```
+T32 → T33 → T34
 ```
 
 ---
@@ -787,6 +799,72 @@ T27 → T28 → T29 → T30 → T31
 **Commit**: `docs: describe the merged spec-driven flow in the README`
 
 ---
+
+---
+
+### Phase 8: K8 Fix CR1
+
+#### T32: Fix CR1-F1 a path into a feature folder names the feature
+
+**What**: in `prep_review.py`, a `spec` target that is a path inside `.specs/features/<f>/` (the folder itself or any file in it) resolves to feature `<f>` and is reviewed exactly as `prep_review.py spec <f>`, instead of stopping with "no feature". The docstring of `foreign_plan` then matches the code.
+**Where**: `skills/spec-driven/scripts/prep_review.py` (tests in `tests/test_prep_review.py`)
+**Depends on**: T31
+**Reuses**: `foreign_plan`, `feature_target`
+**Requirement**: PLAN-06
+**Fixes**: CR1-F1
+
+**Done when**:
+- [ ] the Scenario test passes
+- [ ] Gate check passes: quick, scenarios, build, plan
+
+**Tests**: integration
+**Scenarios**: PLAN-06.S1
+**Gate**: quick
+
+**Commit**: `fix(spec-driven): review the feature a path inside .specs/features names`
+
+---
+
+#### T33: Fix CR1-F2 collision-safe report folders for foreign plans
+
+**What**: the first run that uses `.specs/reviews/<slug>/` writes the plan's repo-relative path to `.specs/reviews/<slug>/source.txt` and includes it in the snapshot commit. When `source.txt` names a different path, the slug becomes `<slug>-<first 8 hex digits of the SHA-1 of the target's repo-relative path>`, and run numbers and the previous run are counted in that folder. Existing folders without `source.txt` are treated as owned by the current target.
+**Where**: `skills/spec-driven/scripts/prep_review.py` (tests in `tests/test_prep_review.py`, fixtures under `tests/fixtures/`)
+**Depends on**: T32
+**Reuses**: `foreign_target`, `next_run`, `snapshot`
+**Requirement**: PLAN-04
+**Fixes**: CR1-F2
+
+**Done when**:
+- [ ] the Scenario test passes and PLAN-04.S1 to S3 still pass
+- [ ] Gate check passes: quick, scenarios, build, plan
+
+**Tests**: integration
+**Scenarios**: PLAN-04.S4
+**Gate**: quick
+
+**Commit**: `fix(spec-driven): keep colliding foreign plan slugs in separate report folders`
+
+---
+
+#### T34: Fix CR1-F5 read the traceability table by header name
+
+**What**: `validate_spec.py` finds the Requirement Traceability table by its `Requirement ID` and `Status` headers through `scenarios_lib.find_tables` and reads cells by header name; the duplicate `_cells` helper is removed in favour of `split_row`. Behaviour is unchanged.
+**Where**: `skills/spec-driven/scripts/validate_spec.py`
+**Depends on**: T33
+**Reuses**: `scenarios_lib.find_tables`, `split_row`
+**Requirement**: none (refactor; the existing GRILL, PLAN-01 tests are the regression check)
+**Fixes**: CR1-F5
+
+**Done when**:
+- [ ] `rg -n "def _cells" skills/spec-driven/scripts/validate_spec.py` finds nothing
+- [ ] Gate check passes: quick, build, plan
+
+**Tests**: none (refactor; existing tests cover the behaviour)
+**Scenarios**: none - this task writes no tests
+**Gate**: quick
+
+**Commit**: `refactor(spec-driven): read the traceability table by header name`
+
 
 ## Task Granularity Check
 
