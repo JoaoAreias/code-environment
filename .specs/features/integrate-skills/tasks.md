@@ -571,8 +571,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: READ-01, READ-06 (Repo Standard and graph wording)
 
 **Done when**:
-- [ ] no instruction in these files writes `AD-NNN` or ADRs, or deletes `graphify-out/`
-- [ ] Gate check passes: full
+- [x] no instruction in these files writes `AD-NNN` or ADRs, or deletes `graphify-out/`
+- [x] Gate check passes: full
 
 **Tests**: none (wording; READ-01 is claimed by T23 and READ-06 by T20)
 **Scenarios**: none - this task writes no tests
