@@ -777,8 +777,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: none (documentation)
 
 **Done when**:
-- [ ] the README lists no retired skill as installed, `wizard` included
-- [ ] Gate check passes: full
+- [x] the README lists no retired skill as installed, `wizard` included
+- [x] Gate check passes: full
 
 **Tests**: none (documentation)
 **Scenarios**: none - this task writes no tests
