@@ -108,15 +108,6 @@ def _autodetect(root):
     )
 
 
-def split_row(line):
-    cells = line.strip().strip("|").split("|")
-    return [c.strip() for c in cells]
-
-
-def is_separator(line):
-    return bool(re.match(r"^\s*\|?[\s:|-]+\|?\s*$", line)) and "-" in line
-
-
 def section_bounds(lines, name):
     """Return (start, end) line indices for a `## name` section body."""
     start = None
@@ -245,17 +236,16 @@ def check(spec_path):
     # 4. Requirement traceability IDs.
     b = section_bounds(lines, "Requirement Traceability")
     if b:
-        rows = [lines[i] for i in range(*b) if lines[i].strip().startswith("|")]
-        data = [r for r in rows if not is_separator(r)]
-        if data:
-            data = data[1:]
+        section = lines[b[0]:b[1]]
+        # Read the ID by header name; a table without a `Requirement ID` header falls back to its first column.
+        key = "requirement id"
+        tables = find_tables(section, "Requirement ID")
+        if not tables:
+            key, tables = "", find_tables(section)
+        data = [row.get(key, "") for t in tables for row in t]
         template_seen = False
         real_ids = 0
-        for r in data:
-            cells = split_row(r)
-            if not cells:
-                continue
-            rid = cells[0]
+        for rid in data:
             if PLACEHOLDER_RE.match(rid) or "[" in rid:
                 template_seen = True
                 continue
@@ -267,7 +257,7 @@ def check(spec_path):
                 real_ids += 1
         if template_seen and real_ids == 0:
             warnings.append("Requirement Traceability has only template rows (no real IDs yet)")
-        listed = {split_row(r)[0] for r in data if split_row(r)}
+        listed = set(data)
         for ac in parsed["acs"]:
             if ac["id"] not in listed:
                 errors.append(f"{ac['id']} is missing from Requirement Traceability")

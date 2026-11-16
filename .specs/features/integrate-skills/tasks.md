@@ -848,16 +848,16 @@ T32 → T33 → T34
 
 #### T34: Fix CR1-F5 read the traceability table by header name
 
-**What**: `validate_spec.py` finds the Requirement Traceability table by its `Requirement ID` and `Status` headers through `scenarios_lib.find_tables` and reads cells by header name; the duplicate `_cells` helper is removed in favour of `split_row`. Behaviour is unchanged.
+**What**: `validate_spec.py` finds the Requirement Traceability table by its `Requirement ID` and `Status` headers through `scenarios_lib.find_tables` and reads cells by header name (a table without a `Requirement ID` header falls back to its first column, as before); `validate_spec.py`'s own `split_row` and `is_separator`, which duplicated `scenarios_lib._cells` and the separator test in `find_tables`, are removed. Behaviour is unchanged.
 **Where**: `skills/spec-driven/scripts/validate_spec.py`
 **Depends on**: T33
-**Reuses**: `scenarios_lib.find_tables`, `split_row`
+**Reuses**: `scenarios_lib.find_tables`
 **Requirement**: none (refactor; the existing GRILL, PLAN-01 tests are the regression check)
 **Fixes**: CR1-F5
 
 **Done when**:
-- [ ] `rg -n "def _cells" skills/spec-driven/scripts/validate_spec.py` finds nothing
-- [ ] Gate check passes: quick, build, plan
+- [x] `rg -n "def split_row|def is_separator" skills/spec-driven/scripts/validate_spec.py` finds nothing
+- [x] Gate check passes: quick, build, plan
 
 **Tests**: none (refactor; existing tests cover the behaviour)
 **Scenarios**: none - this task writes no tests
