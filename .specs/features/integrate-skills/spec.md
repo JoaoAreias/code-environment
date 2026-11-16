@@ -1266,9 +1266,9 @@ Full text, reasons and trade-offs live in the Grilling Record. Decided by `user`
 | PLAN-01 | P1: Plans from older rules and other flows | Execute | Verified |
 | PLAN-02 | P1: Plans from older rules and other flows | Execute | Verified |
 | PLAN-03 | P1: Plans from older rules and other flows | Execute | Verified |
-| PLAN-04 | P1: Plans from older rules and other flows | Tasks | Pending |
+| PLAN-04 | P1: Plans from older rules and other flows | Execute | Verified |
 | PLAN-05 | P1: Plans from older rules and other flows | Execute | Verified |
-| PLAN-06 | P1: Plans from older rules and other flows | Tasks | Pending |
+| PLAN-06 | P1: Plans from older rules and other flows | Execute | Verified |
 | PROOF-01 | P1: Proof for changes a test cannot exercise | Execute | Verified |
 | PROOF-02 | P1: Proof for changes a test cannot exercise | Execute | Verified |
 | FLOW-01 | P2: One implementation path | Execute | Verified |

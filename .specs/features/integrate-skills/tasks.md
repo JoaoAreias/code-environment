@@ -883,6 +883,8 @@ T32 → T33 → T34
 | T24 | review.md plus the format file it depends on | ⚠️ Multi-file, one concept |
 | T29 | 2 skills, same change | ⚠️ Multi-file, one concept |
 | T30 | 8 deletions | ⚠️ Multi-file, one concept |
+| T32, T33 | 1 script change each (with tests and fixtures) | ✅ Granular |
+| T34 | 1 script refactor | ✅ Granular |
 
 ## Diagram-Definition Cross-Check
 
@@ -902,6 +904,8 @@ T32 → T33 → T34
 | T23-T26 | previous task | chain | ✅ |
 | T27 | T26 | start of Phase 7 (cross-phase) | ✅ |
 | T28-T31 | previous task | chain | ✅ |
+| T32 | T31 | start of Phase 8 (cross-phase) | ✅ |
+| T33-T34 | previous task | chain | ✅ |
 
 ## Test Co-location Validation
 
@@ -912,3 +916,5 @@ T32 → T33 → T34
 | T11, T15 | installer | integration (inspect for the fd warning) | integration | ✅ |
 | T3, T16-T20, T22-T29 | skill and agent prose | inspect | inspect | ✅ |
 | T12-T14, T21, T30, T31 | prose with no own Scenario | none | none | ✅ |
+| T32, T33 | deterministic scripts | integration | integration | ✅ |
+| T34 | deterministic scripts (refactor, no new Scenario) | none | none | ✅ |
