@@ -756,9 +756,9 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: FLOW-01 (source side; installed copies handled by T11)
 
 **Done when**:
-- [ ] `grep -rn "ask-matt\|to-tickets\|to-spec\|triage\|wayfinder\|wizard\|/implement" skills agents` finds nothing outside historical records
-- [ ] `grep -rn "ready-for-agent\|agent-grabbable" skills agents` finds nothing
-- [ ] Gate check passes: full
+- [x] `grep -rn "ask-matt\|to-tickets\|to-spec\|triage\|wayfinder\|wizard\|/implement" skills agents` finds nothing outside historical records
+- [x] `grep -rn "ready-for-agent\|agent-grabbable" skills agents` finds nothing
+- [x] Gate check passes: full
 
 **Tests**: none (deletion; FLOW-01 is proven by T11)
 **Scenarios**: none - this task writes no tests
