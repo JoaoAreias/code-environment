@@ -50,7 +50,7 @@ Each candidate is one `<article>`:
 - **Problem**: one sentence. What hurts.
 - **Solution**: one sentence. What changes.
 - **Wins**: bullets, ≤6 words each. e.g. "Tests hit one interface", "Pricing logic stops leaking", "Delete 4 shallow wrappers".
-- **ADR callout** (if applicable): one line in an amber-tinted box.
+- **Decision callout** (if applicable): one line in an amber-tinted box, shown when the candidate contradicts an active Decision. It names the Decision by ID (e.g. `D-billing-rules.3`) and says in a few words why it is worth reopening.
 
 No paragraphs of explanation. If the diagram needs a paragraph to be understood, redraw the diagram.
 

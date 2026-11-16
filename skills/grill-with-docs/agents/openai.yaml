@@ -1,5 +1,5 @@
 interface:
   display_name: "Grill with Docs"
-  short_description: "Grill a design and write its docs"
+  short_description: "Grill a non-feature plan into a Grilling Record"
 policy:
   allow_implicit_invocation: false

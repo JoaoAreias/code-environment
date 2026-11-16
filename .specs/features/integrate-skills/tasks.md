@@ -736,8 +736,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: REC-09
 
 **Done when**:
-- [ ] neither skill mentions writing or offering an ADR
-- [ ] Gate check passes: full
+- [x] neither skill mentions writing or offering an ADR
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: REC-09.S1
