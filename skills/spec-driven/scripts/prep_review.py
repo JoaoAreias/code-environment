@@ -34,6 +34,7 @@ Exit codes: 0 ready, 1 precondition failed (message says what to do), 2 usage er
 import argparse
 import datetime as _dt
 import glob
+import hashlib
 import os
 import re
 import shutil
@@ -311,6 +312,24 @@ def feature_target(root, feature):
     return feature, fdir, intro, decisions, checks
 
 
+def report_slug(root, rel, slug):
+    """Report folder slug for a foreign plan. Each folder records its plan in `source.txt`; when the folder
+    already belongs to a different plan path, append a short hash of `rel` so two plans never share history.
+    Writes `source.txt` for the folder it returns when the file is missing."""
+    def owner(name):
+        src = os.path.join(root, ".specs", "reviews", name, "source.txt")
+        return open(src, encoding="utf-8").read().strip() if os.path.isfile(src) else None
+    taken = owner(slug)
+    if taken is not None and taken != rel:
+        slug = f"{slug}-{hashlib.sha1(rel.encode('utf-8')).hexdigest()[:8]}"
+    if owner(slug) is None:
+        folder = os.path.join(root, ".specs", "reviews", slug)
+        os.makedirs(folder, exist_ok=True)
+        with open(os.path.join(folder, "source.txt"), "w", encoding="utf-8") as f:
+            f.write(rel + "\n")
+    return slug
+
+
 def foreign_target(root, rel):
     """Return the same tuple as feature_target for a foreign plan. The plan is only read, never written or committed."""
     path = os.path.join(root, rel)
@@ -326,7 +345,7 @@ def foreign_target(root, rel):
     if dirty:
         raise Stop("the foreign plan has uncommitted changes, and prep never commits a plan it does not own:\n  "
                    + "\n  ".join(dirty) + "\nCommit or stash them, then retry.")
-    slug = re.sub(r"[^A-Za-z0-9]+", "-", stem).strip("-")
+    slug = report_slug(root, rel, re.sub(r"[^A-Za-z0-9]+", "-", stem).strip("-"))
     intro = [f"- Plan: `{rel}` · foreign (not written by spec-driven): review it as it is and never edit it",
              f"- Plan files: {', '.join('`' + f + '`' for f in files)}"]
     checks = ["Skipped: the plan is foreign (not written by spec-driven), so `validate_spec.py` and `validate_tasks.py`, "

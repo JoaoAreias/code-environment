@@ -1,5 +1,6 @@
 """Scenario tests for prep_review.py spec. Fixtures: cases under tests/fixtures/ laid over tests/fixtures/base/."""
 
+import hashlib
 import os
 import subprocess
 import unittest
@@ -206,6 +207,24 @@ class ForeignPlans(unittest.TestCase):
                               r"`\.kiro/specs/payments/requirements\.md`, `\.kiro/specs/payments/tasks\.md`$")
         self.assertIn("write the report to `.specs/reviews/kiro-specs-payments/spec-review-1.md`", out)
 
+
+    def test_colliding_slugs_keep_separate_histories(self):
+        """
+        Scenario: PLAN-04.S4 two plans whose slugs collide keep separate histories
+          Given a fixture repository with committed docs/042_billing.md and docs/042-billing.md
+          And .specs/reviews/docs-042-billing/ already holds a spec-review-1.md made for docs/042_billing.md
+          When prep_review.py spec docs/042-billing.md runs
+          Then its output names a report path under .specs/reviews/docs-042-billing-<hash>/ whose hash comes from the path docs/042-billing.md
+          And its output says there is no previous run
+        """
+        repo = fixtures.build_repo(self, "foreign-slug-collide")
+        code, out = prep(repo, "docs/042-billing.md")
+        self.assertEqual(code, 0, out)
+        digest = hashlib.sha1(b"docs/042-billing.md").hexdigest()[:8]
+        self.assertIn(f"write the report to `.specs/reviews/docs-042-billing-{digest}/spec-review-1.md`", out)
+        self.assertRegex(out, r"(?m)^- Previous run: none$")
+        self.assertEqual(read(repo, f".specs/reviews/docs-042-billing-{digest}/source.txt"), b"docs/042-billing.md\n")
+        self.assertEqual(read(repo, ".specs/reviews/docs-042-billing/source.txt"), b"docs/042_billing.md\n")
 
 
 class FeaturePaths(unittest.TestCase):
