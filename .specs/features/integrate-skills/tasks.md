@@ -716,8 +716,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: FLOW-06
 
 **Done when**:
-- [ ] `grep -n "into the real code" skills/prototype/SKILL.md` finds nothing
-- [ ] Gate check passes: full
+- [x] `grep -n "into the real code" skills/prototype/SKILL.md` finds nothing
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: FLOW-06.S1
