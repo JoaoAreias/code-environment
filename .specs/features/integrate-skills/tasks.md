@@ -654,8 +654,8 @@ T27 → T28 → T29 → T30 → T31
 **Requirement**: REV-03, REV-04, REV-05
 
 **Done when**:
-- [ ] the agent no longer reads `context.md` or `AD-NNN` as primary sources
-- [ ] Gate check passes: full
+- [x] the agent no longer reads `context.md` or `AD-NNN` as primary sources
+- [x] Gate check passes: full
 
 **Tests**: inspect
 **Scenarios**: REV-03.S1, REV-04.S1, REV-05.S1, REV-05.S2
