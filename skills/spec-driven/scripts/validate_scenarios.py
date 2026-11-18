@@ -18,6 +18,9 @@ What it checks (heuristic, stack-agnostic):
   ERROR  - a test's Given/When/Then text drifted from the spec (or is missing)
   ERROR  - a test claims more than one Scenario
   ERROR  - a Scenario of this feature has no test proving it (skip with --no-missing)
+  ERROR  - a Scenario marked `**Proof**: inspect` does not have exactly one row with
+           Result PASS in the Scenario-Anchored table of the feature's validation.md
+           (the table is found by its `Scenario` and `Result` headers)
   ERROR  - with --since: a test added or modified since REF claims no Scenario
            (Unclaimed Test touched by the Change; claim it or drop it)
   WARN   - several tests claim the same Scenario
@@ -38,10 +41,11 @@ Exit codes: 0 pass, 1 errors found, 2 usage error.
 
 import argparse
 import os
+import re
 import sys
 
-from scenarios_lib import (changed_lines, is_test_path, load_all_specs, parse_spec,
-                           parse_test_file, tracked_and_untracked)
+from scenarios_lib import (SCEN_ID_RE, changed_lines, find_tables, is_test_path, load_all_specs,
+                           parse_spec, parse_test_file, tracked_and_untracked)
 
 
 def resolve_feature(root, feature):
@@ -53,6 +57,40 @@ def resolve_feature(root, feature):
     if len(feats) == 1:
         return feats[0], os.path.join(base, feats[0], "spec.md")
     return None, None
+
+
+def inspect_results(validation_path):
+    """Map Scenario ID -> list of Result cells (marks stripped) from the Scenario-Anchored table.
+
+    Returns None when validation.md or the table is missing.
+    """
+    if not os.path.isfile(validation_path):
+        return None
+    lines = open(validation_path, encoding="utf-8", errors="replace").read().splitlines()
+    tables = find_tables(lines, "Scenario", "Result")
+    if not tables:
+        return None
+    results = {}
+    for row in (r for t in tables for r in t):
+        m = SCEN_ID_RE.search(row.get("scenario", ""))
+        if m:
+            result = re.sub(r"^[^A-Za-z]+", "", re.sub(r"[*`]", "", row.get("result", ""))).strip()
+            results.setdefault(m.group(0), []).append(result)
+    return results
+
+
+def check_inspect(sid, results):
+    """Return the error for an inspect Scenario, or None when exactly one PASS row proves it."""
+    if results is None:
+        return f"Scenario {sid} (inspect) has no proof: validation.md has no table with Scenario and Result headers"
+    rows = results.get(sid, [])
+    if not rows:
+        return f"Scenario {sid} (inspect) has no row in validation.md's Scenario-Anchored table"
+    if len(rows) > 1:
+        return f"Scenario {sid} has more than one row in validation.md's Scenario-Anchored table ({', '.join(rows)})"
+    if rows[0].upper() != "PASS":
+        return f"Scenario {sid} (inspect) is not proven: its validation.md Result is '{rows[0]}', not PASS"
+    return None
 
 
 def run(root, feature, since=None, only=None, check_missing=True, tests=None):
@@ -98,14 +136,22 @@ def run(root, feature, since=None, only=None, check_missing=True, tests=None):
     wanted = set(own) if not only else {s for s in only if s in own}
     for sid in sorted(set(only or ()) - set(own)):
         errors.append(f"--only names {sid}, which {name}'s spec does not define")
+    proven = {s for s in own if s in claimed_by and own[s]["proof"] == "test"}
     if check_missing:
+        results = inspect_results(os.path.join(os.path.dirname(spec_path), "validation.md"))
         for sid in sorted(wanted):
-            if sid not in claimed_by:
+            if own[sid]["proof"] == "inspect":
+                error = check_inspect(sid, results)
+                if error:
+                    errors.append(error)
+                else:
+                    proven.add(sid)
+            elif sid not in claimed_by:
                 errors.append(f"Scenario {sid} has no test proving it")
     for sid, where in sorted(claimed_by.items()):
         if len(where) > 1 and sid in own:
             warnings.append(f"Scenario {sid} is claimed by {len(where)} tests: {', '.join(where)}")
-    infos.append(f"{len(own)} Scenario(s) in {name}; {sum(1 for s in own if s in claimed_by)} proven; "
+    infos.append(f"{len(own)} Scenario(s) in {name}; {len(proven)} proven; "
                  f"{grandfathered} test(s) without a Scenario left untouched (Grandfathered or outside --since)")
     return errors, warnings, infos
 

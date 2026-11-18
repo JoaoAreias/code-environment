@@ -13,7 +13,9 @@ A **Repo Standard** is a rule the codebase documents about how its code must be 
 - Agent rule files: `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/`, `.claude/rules/`, `.github/copilot-instructions.md`
 - Contributor docs: `CONTRIBUTING.md`, `CODING_STANDARDS.md`, `STYLEGUIDE.md`, `docs/` pages on standards, style, conventions or guidelines
 - Tool config: linter, formatter and type-checker settings (`eslint`, `biome`, `ruff`/`pyproject.toml`, `golangci`, `rubocop`, `tsconfig.json` strictness, `.editorconfig`)
-- Active `AD-NNN` entries in `.specs/STATE.md` that set a convention
+- Active Decisions that bind the project: every Decision with `Binds: project` in an `active` Grilling Record whose Areas overlap the paths this feature touches (or are `*`). Find them with the read rule in [decisions.md](decisions.md): run its discovery first, then read `summary.md` and open the records that apply. The legacy decision sources that file lists (`docs/adr/`, an old `## Decisions` log in `.specs/STATE.md`) count the same way where they set a convention.
+
+Do not rely on this list of names alone. The discovery listing in [decisions.md](decisions.md) section 0 shows the rule files and standards documents this repository really has, including ones from other tools; read what it shows.
 
 Rules a tool already enforces are not re-checked by hand. Flag only code that switches a rule off (`eslint-disable`, `# noqa`, `# type: ignore`, `@ts-ignore`, `//nolint`) without a stated reason.
 
@@ -111,3 +113,5 @@ Record what you searched:
 - Execute: one line in the commit body, `Searched: <terms> -> reused <symbol>` or `Searched: <terms> -> none equivalent`
 
 Reviewers treat these records as Claims and re-check them.
+
+**Keep the graph cache.** `graphify-out/` holds the code graph these searches read. It may be gitignored or listed in `.git/info/exclude`; ignored does not mean disposable. `graphify-out/` is never deleted: do not remove it, clean it up, move it or remove any file inside it, in any phase, including with `git clean -x` or to make a tree look clean. Refresh it with `graphify update .` and nothing else.

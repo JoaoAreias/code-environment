@@ -2,13 +2,17 @@
 
 **Goal**: Implement ONE task at a time. Surgical changes. Verify. Commit. Repeat.
 
-This is where code gets written. Every task follows the same cycle: plan → implement → verify → commit. Verification is built into every task, not a separate phase.
+This is where code gets written. Every task follows the same cycle: plan → test first → implement → verify → commit. The test-first part is the `tdd` skill's loop, run once per Task (step 4). Verification is built into every task, not a separate phase.
+
+Execute ends when the Verifier passes. The Change Review (`/code-review`) is the human's to start: you say it is available and stop (step 9).
 
 ---
 
 ## MANDATORY: Before Starting Any Implementation
 
 **Execution Approval first.** Do not write code until the human has explicitly said to execute, after a `/spec-review` whose Findings all have Dispositions (fix tasks: after the Findings they fix have Dispositions). If no Spec Review exists, remind the human that `/spec-review` comes first, and wait. See [review.md](review.md).
+
+**Read the Decisions that bind this work.** Follow the read rule in [decisions.md](decisions.md): discovery, the `active` Grilling Records that apply to the paths you touch or name this feature, and the legacy decision sources, including the feature's `context.md` when one exists. Execute only reads these files. It never writes a Decision, and it never creates or edits a per-feature `context.md`. If the work has to contradict an active Decision, stop and surface the conflict by Decision ID.
 
 **Read [coding-principles.md](coding-principles.md) and [standards.md](standards.md), and state:**
 
@@ -34,35 +38,21 @@ done, commit hashes, test counts, deviations/blockers) to the orchestrator. See
 
 ### Before implementing: assess sub-agent delegation (MANDATORY - before the first task)
 
-Before implementing anything, if a formal `tasks.md` with an Execution Plan exists, **count its total tasks** and pack the phases into task-budgeted batches (~7 tasks per worker, whole phases - see [sub-agents.md](sub-agents.md)). If that yields **more than one batch** (> ~8 tasks), you MUST present the sub-agent offer to the user and wait for their choice before starting Execute - do not silently proceed inline. If the feature fits a single batch (≤ ~8 tasks, or the user declines), execute inline. Skip this check only when you are already a batch worker executing a delegated batch (the orchestrator already made the delegation decision).
+Before implementing anything, **count the total tasks** in the Execution Plan of `tasks.md` and pack the phases into task-budgeted batches (~7 tasks per worker, whole phases - see [sub-agents.md](sub-agents.md)). If that yields **more than one batch** (> ~8 tasks), you MUST present the sub-agent offer to the user and wait for their choice before starting Execute - do not silently proceed inline. If the feature fits a single batch (≤ ~8 tasks, or the user declines), execute inline. Skip this check only when you are already a batch worker executing a delegated batch (the orchestrator already made the delegation decision).
 
-### 0. List Atomic Steps (MANDATORY when Tasks phase was skipped)
+### 0. Work only from `tasks.md`
 
-If there is no `tasks.md` for this feature, you MUST list atomic steps before writing any code. This is non-negotiable - it prevents the agent from losing focus and doing too many things at once.
+Every feature has a `tasks.md`, whatever its scope: the Tasks phase is never skipped ([tasks.md](tasks.md)). Execute builds only the Tasks written there. Do not write an execution plan of your own in chat and build from it.
 
-```
-## Execution Plan
-
-1. [Step] → files: [list] → verify: [how] → commit: [message]
-2. [Step] → files: [list] → verify: [how] → commit: [message]
-3. [Step] → files: [list] → verify: [how] → commit: [message]
-```
-
-**Each step must be:**
-
-- ONE deliverable (one component, one function, one endpoint, one file change)
-- Independently verifiable (can prove it works before moving on)
-- Independently committable (gets its own atomic git commit)
-
-If listing steps reveals >5 steps or complex dependencies, STOP and create a formal `tasks.md` instead. The Tasks phase was wrongly skipped.
+If `.specs/features/[feature]/tasks.md` does not exist, STOP. Write no code. Tell the user that the Tasks phase has to run first, and that the plan then needs a `/spec-review` (which the human runs) and Execution Approval before anything is built.
 
 ### 1. Pick Task
 
-From tasks.md (if exists) or from the execution plan above. User specifies ("implement T3") or suggest next available.
+From `tasks.md`. User specifies ("implement T3") or suggest next available.
 
 ### 2. Verify Dependencies
 
-If tasks.md exists, check dependencies. If using inline plan, follow the order listed.
+Check the Task's `Depends on` field, and the `Blocked by` field of its Ticket.
 
 ❌ If blocked: "T3 depends on T2 which isn't done. Should I do T2 first?"
 
@@ -80,11 +70,19 @@ Success: [how to verify]
 
 Before creating any new exported function, class, module or endpoint, look for an existing equivalent ([standards.md](standards.md) section 4): `graphify update .`, then `python3 <skill-dir>/scripts/graph_queries.py symbols --match <concept words and synonyms>`, `graphify query`, `rg`. Reuse or extend what fits. Note the search for the commit body: `Searched: <terms> -> reused <symbol>` or `Searched: <terms> -> none equivalent`.
 
-### 4. Write Tests (one per Scenario, derived from the spec)
+### 4. Write Tests (one per Scenario, derived from the spec, test first)
+
+**Run the `tdd` loop for every Task.** `tdd` is the test-first loop Execute runs per Task; steps 4 and 4b are that loop. Load the `tdd` skill by name with your harness's skill tool (the Skill tool in Claude Code, the `skill` tool in opencode) before the first Task of the session. If the harness offers no such tool, or the load fails, read `<skill-dir>/../tdd/SKILL.md` instead. Then, for each `test` Scenario of the Task, one Scenario at a time:
+
+1. **Red.** Write that Scenario's test (rules below), run it, and see it fail for the reason the Scenario describes. Report the failing run before you edit any production file. A test that passes before the code exists proves nothing: fix the test, or surface that the behavior already exists.
+2. **Green.** Write the minimum production code that makes it pass (step 4b), run it again, and report the passing run.
+3. **Refactor** only the code this cycle wrote, with the test green. Wider restructuring is not part of the Task: surface it (step 8).
+
+The seams are already agreed: the Task's Scenarios and `design.md` name the interfaces under test, so do not ask the user to confirm them again. Ask only about an interface that neither names.
 
 If the task includes tests (per the Tests field and **Test Coverage Matrix** in tasks.md):
 
-1. Write one test per Scenario listed in the task's `Scenarios` field. Each test proves exactly one Scenario.
+1. Write one test per `test` Scenario listed in the task's `Scenarios` field. Each test proves exactly one Scenario. A Scenario marked `**Proof**: inspect` in `spec.md` gets no test: the Verifier checks it once, after the last task ([validate.md](validate.md) section 2).
 2. Put the Scenario's ID and its Given/When/Then text, **copied verbatim from `spec.md`**, in the test's docstring or a comment directly above it ([standards.md](standards.md) section 3).
 3. The test asserts the outcome the Scenario names, through the public interface - **never** what the code currently does. Where the spec does not define a precise outcome, note it as a **spec-precision gap** rather than writing a vague assertion and passing silently.
 4. Mock only at system boundaries (network, clock, randomness, third-party APIs). A test that mocks internal collaborators or asserts their call counts is Implementation-Coupled; rewrite it.
@@ -98,7 +96,7 @@ If the task includes tests (per the Tests field and **Test Coverage Matrix** in 
 
 If a test that proves a Scenario looks wrong, the Scenario is the question: STOP and ask the user before changing either. Never silently change a Scenario-proving test.
 
-If the task does NOT include tests (e.g., entity-only, config-only), skip to Step 4b.
+If the task does NOT include tests (e.g., entity-only, config-only, or a Task whose Scenarios are all `inspect`), there is nothing to run red: skip to Step 4b.
 
 ### 4b. Implement
 
@@ -122,7 +120,7 @@ Run the gate check command from the task definition. This is MANDATORY - not "if
 
 1. Look up the command for the task's Gate level (quick/full/build) in the **Gate Check Commands** section of tasks.md, then run it
 2. Non-zero exit code = STOP. Fix the failure. Re-run. Do not proceed until it passes.
-3. Run `python3 <skill-dir>/scripts/validate_scenarios.py <feature> --only <this task's Scenario IDs> --since HEAD`. It fails when a Scenario has no test, a test's Scenario text drifted, or a test this task touched claims no Scenario.
+3. Run `python3 <skill-dir>/scripts/validate_scenarios.py <feature> --only <this task's test Scenario IDs> --since HEAD`. Pass only the IDs whose proof type is `test` (a Scenario with no `**Proof**:` line is `test`). Never pass an `inspect` ID here: its proof is a row the Verifier writes into `validation.md` after the last task, so it cannot pass yet. A task whose Scenarios are all `inspect` skips this command. The command fails when a `test` Scenario has no test, a test's Scenario text drifted, or a test this task touched claims no Scenario.
 4. Confirm the test count matches expectations (no tests were silently deleted or skipped; removals carry a `Removed test:` line)
 
 **Tiered gates (from the Gate Check Commands section of tasks.md):**
@@ -319,8 +317,8 @@ This is a plain git hook, not tied to any editor or assistant. Skip it if the pr
 
 During implementation, you will notice things that could be improved, refactored, or added. **Do not act on them.** Instead:
 
-- If it's a bug: surface it to the user (or capture it as a separate task)
-- If it's an improvement: add it to the feature's `context.md` under "Deferred Ideas" (or surface it to the user if there is no `context.md`)
+- If it's a bug: surface it to the user. Do not fix it inside this Task.
+- If it's an improvement idea: surface it to the user, in chat or in the batch report. Do not edit the plan on your own. Add an Out of Scope row with reason `deferred` to `spec.md` only when the user gives a go-ahead for that idea. An idea the user does not answer is not recorded anywhere.
 - If it's related to the current task: only include it if it's in the "Done when" criteria
 
 **The heuristic:** "Is this in my task definition?" If no, don't touch it.
@@ -346,9 +344,32 @@ Dispatch a fresh sub-agent following the **Verifier** role described in [sub-age
 
 **What the Verifier does** (full procedure in [sub-agents.md](sub-agents.md); operating checklist in [validate.md](validate.md)): a spec-anchored coverage check (evidence-or-zero, each asserted value matched to the spec outcome) plus a discrimination sensor (behavior-level mutations run in a scratch state and then discarded), after which it writes `.specs/features/[feature]/validation.md` (PASS/FAIL, per-AC evidence, sensor result, diff range) and returns a compact verdict + ranked gaps in chat. It runs read-only over the real tree and does NOT fix.
 
-If the Verifier returns FAIL, the orchestrator routes the ranked gaps back to an implementer as fix tasks, then re-dispatches the Verifier - bounded to **3 fix→re-verify iterations** before escalating to the user.
-
 If you are unsure whether more tasks remain, check `tasks.md`: if every task is marked complete, dispatch the Verifier now.
+
+**When the Verifier returns FAIL: one fix Ticket for that round.** The Verifier does not fix anything; the orchestrator turns its ranked gaps into fix tasks in `tasks.md`, following [tickets.md](tickets.md) section 2:
+
+1. Append one fix task per gap to the Task Breakdown, in the usual Task shape, each with a `**Fixes**` field naming the gap (the Scenario ID and what is missing).
+2. Append **one new Ticket for the round** at the end of `## Tickets`, with the next free `K` number and the title `Fix Verifier round <r>`, where `<r>` is 1 for the first failed round, 2 for the second, and so on. Its `**Tasks**` field lists every fix task of that round. Its `**Blocked by**` field names the Tickets whose Scenarios have the gaps. Its `**Covers**` field names the Scenarios the gaps are in. Never add a fix task to a finished Ticket, and never leave a fix task outside a Ticket.
+3. Add a phase for the fix Ticket to the Execution Plan, run `python3 <skill-dir>/scripts/validate_tasks.py <feature>`, and commit the plan change on its own (`docs(tasks): add fix Ticket for Verifier round <r>`).
+4. Route the fix tasks to an implementer. Each one runs the full per-task cycle above (steps 1-7). Then re-dispatch the Verifier.
+
+Example: `tasks.md` has Tickets `K1` and `K2`, and the Verifier's first round reports two gaps, both in Scenarios that `K2` covers (`CSV-02.S1` and `CSV-04.S2`). You append fix tasks `T9` and `T10` and this Ticket:
+
+```markdown
+### K3: Fix Verifier round 1
+**Delivers**: closes the two gaps of Verifier round 1 (CSV-02.S1 empty file, CSV-04.S2 rounding)
+**Covers**: CSV-02.S1, CSV-04.S2
+**Blocked by**: K2
+**Tasks**: T9, T10
+```
+
+A second failed round adds a second fix Ticket (`Fix Verifier round 2`); it does not reopen the first. The fix→re-verify loop is bounded to **3 iterations** before escalating to the user.
+
+**When the Verifier returns PASS: say `/code-review` is available, and stop.** Execute is finished. Your closing message to the human gives the verdict, the path of `validation.md`, and one sentence saying that the Change Review is available: they can run `/code-review` when they want one. Then stop and wait.
+
+- Never run `/code-review` yourself, and never dispatch the `change-reviewer` agent. Only the human starts a Change Review ([review.md](review.md)).
+- Do not create a `change-review-<n>.md` file, and do not write review Findings of your own in its place.
+- Do not push, open a pull request or publish Tickets as part of finishing. Each of those needs its own explicit go-ahead.
 
 ---
 
@@ -377,12 +398,14 @@ If you are unsure whether more tasks remain, check `tasks.md`: if every task is 
 
 - Test file(s): [paths]
 - Scenarios proved: [IDs]; each test carries its Scenario text verbatim
+- Red run (before any production edit): [command + the failure seen, per Scenario | none - no `test` Scenario]
 - Touched pre-existing tests: [claimed by <ID> | removed (Removed test: line) | none]
 
 ### Implement
 
 [Write minimum code to pass tests]
 
+- Green run: [command + pass count]
 - Tests modified: None
 - Tests skipped/deleted: None
 
@@ -390,7 +413,7 @@ If you are unsure whether more tasks remain, check `tasks.md`: if every task is 
 
 - Command: [gate check command]
 - Result: [X passed, 0 failed]
-- `validate_scenarios.py --only [IDs] --since HEAD`: [0 errors]
+- `validate_scenarios.py --only [test Scenario IDs] --since HEAD`: [0 errors | skipped - only inspect Scenarios]
 - Test count: [N - matches planned test count]
 
 ### Post-Gate
@@ -423,7 +446,7 @@ If you are unsure whether more tasks remain, check `tasks.md`: if every task is 
 **Status**: ✅ Complete | ❌ Blocked | ⚠️ Partial
 ```
 
-**After the LAST task:** dispatch the Verifier sub-agent (see step 9 and [sub-agents.md](sub-agents.md)) for independent feature-level validation, including the spec-anchored check and discrimination sensor. Validation always runs automatically - never prompted. Execute is not done until the Verifier reports PASS and the validation report is written, confirmed deterministically by `python3 <skill-dir>/scripts/validate_state.py <feature>` (exit non-zero = not done); see [validate.md](validate.md).
+**After the LAST task:** dispatch the Verifier sub-agent (see step 9 and [sub-agents.md](sub-agents.md)) for independent feature-level validation, including the spec-anchored check and discrimination sensor. Validation always runs automatically - never prompted. Execute is not done until the Verifier reports PASS and the validation report is written, confirmed deterministically by `python3 <skill-dir>/scripts/validate_state.py <feature>` (exit non-zero = not done); see [validate.md](validate.md). A FAIL round adds one fix Ticket holding that round's fix tasks. After PASS, tell the human that `/code-review` is available and stop; never run it yourself (step 9).
 
 ---
 
@@ -440,7 +463,11 @@ If you are unsure whether more tasks remain, check `tasks.md`: if every task is 
 - **Search before adding** - every new exported symbol gets a graph search and a `Searched:` line
 - **Approval is local** - Push, deploy, and other remote/destructive ops need an explicit go-ahead
 - **Learn from mistakes** - If something goes wrong, surface it to the user so it informs the next task
+- **Red before green** - the `tdd` loop runs per Task: see each `test` Scenario's test fail before writing the code that passes it
 - **Don't stop at the last commit** - Feature-level validation (step 9) is the final step of Execute, not optional
+- **One fix Ticket per Verifier round** - gaps become fix tasks, and all of a round's fix tasks go into one new Ticket
+- **`/code-review` is the human's** - after the Verifier passes, say it is available and stop; never run it or dispatch the reviewer
+- **Ideas are surfaced, not added** - an Out of Scope row is written only on the user's go-ahead
 - **Plain voice in prose** - Commit bodies and the validation summary follow the writing rules in [coding-principles.md](coding-principles.md): lead with what changed, no filler
 - **Validate the commit message** - `python3 <skill-dir>/scripts/check_commit.py --message "..."` before committing
 
@@ -453,6 +480,6 @@ When work is interrupted, paused, or a session ends before the feature is comple
 1. Open `.specs/STATE.md`.
 2. Locate the `## Handoff` section.
 3. **Replace only that section's body** with the current snapshot (feature, phase/task, completed, in-progress `file:line`, next step, blockers, uncommitted files, branch). See [memory.md](memory.md) for the exact format.
-4. Do NOT touch the `## Decisions` section above it - decisions are written only during Design.
+4. Write nothing else to the file. `STATE.md` holds only the Handoff; Decisions live in Grilling Records under `.specs/decisions/`. An older `STATE.md` may still have a `## Decisions` section: it is a legacy decision source ([decisions.md](decisions.md) section 3), so leave it exactly as it is and never add to it.
 
-**Section-scoped write (critical):** Replace the content between the `## Handoff` header and the next `##` header (or end of file). Never overwrite the full file - doing so silently destroys the Decisions log.
+**Section-scoped write (critical):** Replace the content between the `## Handoff` header and the next `##` header (or end of file). Never overwrite the full file - doing so would silently destroy a legacy `## Decisions` section that other sessions still read.

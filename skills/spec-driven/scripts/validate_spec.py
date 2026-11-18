@@ -14,8 +14,12 @@ What it checks (heuristic markdown inspection, not a full parser):
   ERROR  - an acceptance criterion has no requirement ID or no SHALL (not EARS-shaped)
   ERROR  - an acceptance criterion has no Scenario, or a Scenario lacks Given/When/Then,
            sits under the wrong criterion, or reuses an ID
-  ERROR  - an Assumptions row has an empty "Chosen default" or "Rationale" cell
+  ERROR  - in `Decisions & Assumptions`, a Decisions row has an empty "Choice" or
+           "Rationale" cell, or an Assumptions row has an empty "Chosen default" or
+           "Rationale" cell (tables are found by header name; a body of `none` is accepted)
   ERROR  - a Requirement Traceability row has a malformed ID, or a criterion ID is missing from it
+  WARN   - a legacy spec (no `**Grilling Record**:` line) has no `Decisions & Assumptions`
+           section; its old `Assumptions & Open Questions` table is checked instead
   WARN   - no `**Scope**:` line (Medium+ rules applied)
   WARN   - an AC has SHALL but no recognizable EARS lead keyword
   WARN   - template placeholder rows are still present (spec not filled in)
@@ -38,14 +42,17 @@ import os
 import re
 import sys
 
-from scenarios_lib import parse_spec, spec_scope
+from scenarios_lib import find_tables, parse_spec, spec_is_native, spec_scope
+
+DECISIONS = "Decisions & Assumptions"
+LEGACY_ASSUMPTIONS = "Assumptions & Open Questions"
 
 REQUIRED_SECTIONS = [
     "Problem Statement",
     "Existing Capabilities",
     "Standards",
     "Out of Scope",
-    "Assumptions & Open Questions",
+    DECISIONS,
     "User Stories",
     "Requirement Traceability",
 ]
@@ -53,6 +60,7 @@ REQUIRED_SECTIONS_SMALL = [
     "Problem Statement",
     "Existing Capabilities",
     "Standards",
+    DECISIONS,
     "Acceptance Criteria",
     "Steps",
 ]
@@ -98,15 +106,6 @@ def _autodetect(root):
         "validate_spec: multiple features found; pass one explicitly:\n  "
         + "\n  ".join(os.path.join(base, f, "spec.md") for f in features)
     )
-
-
-def split_row(line):
-    cells = line.strip().strip("|").split("|")
-    return [c.strip() for c in cells]
-
-
-def is_separator(line):
-    return bool(re.match(r"^\s*\|?[\s:|-]+\|?\s*$", line)) and "-" in line
 
 
 def section_bounds(lines, name):
@@ -166,11 +165,15 @@ def check(spec_path):
     if scope is None:
         warnings.append("no '**Scope**: Small|Medium|Large|Complex' line - Medium+ rules applied")
     small = scope == "Small"
+    native = spec_is_native(text)
 
     # 1. Required sections.
     for name in (REQUIRED_SECTIONS_SMALL if small else REQUIRED_SECTIONS):
         if section_bounds(lines, name) is None:
-            errors.append(f"missing required section: ## {name}")
+            if name == DECISIONS and not native:
+                warnings.append(f"legacy spec (no **Grilling Record** line): missing section ## {name}")
+            else:
+                errors.append(f"missing required section: ## {name}")
     for name in ("Existing Capabilities", "Standards"):
         b = section_bounds(lines, name)
         if b:
@@ -191,54 +194,58 @@ def check(spec_path):
     if not parsed["acs"]:
         warnings.append("no acceptance criteria with IDs parsed - is the spec filled in?")
 
+    # 3. Decisions & Assumptions: table cells filled. Tables are found by header name.
+    #    A legacy spec keeps its old section, checked at the scopes that always had it.
+    title = DECISIONS
+    b = section_bounds(lines, DECISIONS)
+    if b is None and not native and not small:
+        title = LEGACY_ASSUMPTIONS
+        b = section_bounds(lines, LEGACY_ASSUMPTIONS)
+    body = [lines[i].strip() for i in range(*b) if lines[i].strip()] if b else []
+    if b and [ln.lower().rstrip(".") for ln in body] != ["none"]:
+        section = lines[b[0]:b[1]]
+        template_seen = False
+        for kind, headers, required in (
+            ("decision", ("ID", "Choice"), ("Choice", "Rationale")),
+            ("assumption", ("Assumption", "Chosen default") if title == DECISIONS else ("Chosen default",),
+             ("Chosen default", "Rationale")),
+        ):
+            for row in (r for t in find_tables(section, *headers) for r in t):
+                first = row[""]
+                if PLACEHOLDER_RE.match(first) and PLACEHOLDER_RE.match(row.get(required[0].lower(), "")):
+                    template_seen = True
+                    continue
+                for name in required:
+                    cell = row.get(name.lower(), "")
+                    if not cell or PLACEHOLDER_RE.match(cell):
+                        errors.append(f"{kind} '{first[:40]}' has empty '{name}'")
+        if template_seen:
+            warnings.append(f"{title} still contains template placeholder rows")
+        if not small:
+            # open questions line
+            oq = [lines[i] for i in range(*b) if "open questions" in lines[i].lower()]
+            oq_clean = re.sub(r"[*_]", "", " ".join(oq)).lower()
+            if not oq:
+                warnings.append(f"no 'Open questions:' line in {title}")
+            elif not re.search(r"open questions.*:\s*none", oq_clean):
+                warnings.append("open questions do not read as resolved ('Open questions: none')")
+
     if small:
         return errors, warnings
-
-    # 3. Assumptions table cells filled.
-    b = section_bounds(lines, "Assumptions & Open Questions")
-    if b:
-        rows = [lines[i] for i in range(*b) if lines[i].strip().startswith("|")]
-        data = [r for r in rows if not is_separator(r)]
-        # drop the header row (first table row)
-        if data:
-            data = data[1:]
-        template_seen = False
-        for r in data:
-            cells = split_row(r)
-            if len(cells) < 3:
-                continue
-            assumption, chosen, rationale = cells[0], cells[1], cells[2]
-            if PLACEHOLDER_RE.match(assumption) and PLACEHOLDER_RE.match(chosen):
-                template_seen = True
-                continue
-            if not chosen or PLACEHOLDER_RE.match(chosen):
-                errors.append(f"assumption '{assumption[:40]}' has empty 'Chosen default'")
-            if not rationale or PLACEHOLDER_RE.match(rationale):
-                errors.append(f"assumption '{assumption[:40]}' has empty 'Rationale'")
-        if template_seen:
-            warnings.append("Assumptions table still contains template placeholder rows")
-        # open questions line
-        oq = [lines[i] for i in range(*b) if "open questions" in lines[i].lower()]
-        oq_clean = re.sub(r"[*_]", "", " ".join(oq)).lower()
-        if not oq:
-            warnings.append("no 'Open questions:' line in Assumptions section")
-        elif not re.search(r"open questions.*:\s*none", oq_clean):
-            warnings.append("open questions do not read as resolved ('Open questions: none')")
 
     # 4. Requirement traceability IDs.
     b = section_bounds(lines, "Requirement Traceability")
     if b:
-        rows = [lines[i] for i in range(*b) if lines[i].strip().startswith("|")]
-        data = [r for r in rows if not is_separator(r)]
-        if data:
-            data = data[1:]
+        section = lines[b[0]:b[1]]
+        # Read the ID by header name; a table without a `Requirement ID` header falls back to its first column.
+        key = "requirement id"
+        tables = find_tables(section, "Requirement ID")
+        if not tables:
+            key, tables = "", find_tables(section)
+        data = [row.get(key, "") for t in tables for row in t]
         template_seen = False
         real_ids = 0
-        for r in data:
-            cells = split_row(r)
-            if not cells:
-                continue
-            rid = cells[0]
+        for rid in data:
             if PLACEHOLDER_RE.match(rid) or "[" in rid:
                 template_seen = True
                 continue
@@ -250,7 +257,7 @@ def check(spec_path):
                 real_ids += 1
         if template_seen and real_ids == 0:
             warnings.append("Requirement Traceability has only template rows (no real IDs yet)")
-        listed = {split_row(r)[0] for r in data if split_row(r)}
+        listed = set(data)
         for ac in parsed["acs"]:
             if ac["id"] not in listed:
                 errors.append(f"{ac['id']} is missing from Requirement Traceability")

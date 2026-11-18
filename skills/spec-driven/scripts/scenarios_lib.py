@@ -15,6 +15,12 @@ Spec format (inside `**Acceptance Criteria**` lists and `## Edge Cases`):
          Then ...
        ```
 
+       **Proof**: inspect
+
+The optional `**Proof**: test|inspect` line after a Scenario's closing fence sets
+its proof type (default `test`). An `inspect` Scenario is proven by its row in
+the Scenario-Anchored table of the feature's validation.md, not by a test.
+
 Test format: a comment or docstring inside (or directly above) the test carries
 `Scenario: PAY-01.S1` followed by the same Given/When/Then/And/But lines.
 """
@@ -26,6 +32,7 @@ import subprocess
 REQ_ID = r"[A-Z][A-Z0-9]*-\d+"
 REQ_ID_RE = re.compile(r"^" + REQ_ID + r"$")
 SCEN_ID_RE = re.compile(r"\b(" + REQ_ID + r")\.S(\d+)\b")
+PROOF_RE = re.compile(r"^\*\*Proof\*\*\s*:\s*(test|inspect)\b", re.IGNORECASE)
 SCEN_LINE_RE = re.compile(r"Scenario(?: Outline)?:\s*(" + REQ_ID + r"\.S\d+)\b(.*)$")
 AC_ITEM_RE = re.compile(r"^\s*\d+\.\s+(?:\*\*)?(\[?[A-Z][A-Z0-9\]]*-\d+)(?:\*\*)?\s*[:—-]\s*(.*)$")
 NUMBERED_RE = re.compile(r"^\s*\d+\.\s+(.*)$")
@@ -83,11 +90,16 @@ def spec_scope(text):
     return m.group(1).capitalize() if m else None
 
 
+def spec_is_native(text):
+    """A spec with a `**Grilling Record**:` line is native; without one it is legacy."""
+    return bool(re.search(r"^\*\*Grilling Record\*\*\s*:", text, re.MULTILINE))
+
+
 def parse_spec(text):
     """Parse ACs and Scenarios. Returns dict with acs, scenarios, problems.
 
     acs:       list of {id, line, text}
-    scenarios: dict id -> {ac, line, title, steps}
+    scenarios: dict id -> {ac, line, title, steps, proof}  (proof: "test" or "inspect")
     problems:  list of (line, message) structural errors
     """
     lines = text.splitlines()
@@ -96,13 +108,23 @@ def parse_spec(text):
     current_ac = None
     in_fence = False
     current_scen = None
+    fence_scens = []     # Scenarios of the fence just read; a Proof line may follow it
 
     for idx, raw in enumerate(lines, start=1):
         s = raw.strip()
         if s.startswith("```"):
             in_fence = not in_fence
             current_scen = None
+            if in_fence:
+                fence_scens = []
             continue
+        if not in_fence and fence_scens and s:
+            pm = PROOF_RE.match(s)
+            for sc in fence_scens if pm else ():
+                sc["proof"] = pm.group(1).lower()
+            fence_scens = []
+            if pm:
+                continue
         if in_fence:
             if not in_list:
                 continue
@@ -116,8 +138,9 @@ def parse_spec(text):
                 if sid in scenarios:
                     problems.append((idx, f"duplicate Scenario ID {sid}"))
                 current_scen = {"ac": current_ac["id"] if current_ac else None, "line": idx,
-                                "title": m.group(2).strip(" -:—"), "steps": []}
+                                "title": m.group(2).strip(" -:—"), "steps": [], "proof": "test"}
                 scenarios[sid] = current_scen
+                fence_scens.append(current_scen)
                 continue
             if current_scen is not None and STEP_RE.match(s):
                 current_scen["steps"].append(norm_step(s))
@@ -177,6 +200,41 @@ def load_all_specs(root):
         for sid, sc in parsed["scenarios"].items():
             index.setdefault(sid, (feat, sc))
     return index
+
+
+# ----------------------------- markdown tables -----------------------------
+
+def _cells(line):
+    return [c.strip() for c in line.strip().strip("|").split("|")]
+
+
+def find_tables(lines, *headers):
+    """Return the markdown tables whose header row has every name in `headers`.
+
+    Tables are found by header name, never by position. Each table is a list of
+    rows; a row maps each lower-cased header name (markup stripped) to its cell,
+    plus "" to the row's first cell. Header names are compared case-insensitively.
+    """
+    wanted = {h.lower() for h in headers}
+    tables = []
+    i = 0
+    while i < len(lines) - 1:
+        head, sep = lines[i].strip(), lines[i + 1].strip()
+        if not (head.startswith("|") and sep.startswith("|") and re.match(r"^[\s:|-]+$", sep) and "-" in sep):
+            i += 1
+            continue
+        names = [re.sub(r"[*`_]", "", c).strip().lower() for c in _cells(head)]
+        rows = []
+        i += 2
+        while i < len(lines) and lines[i].strip().startswith("|"):
+            cells = _cells(lines[i])
+            row = dict(zip(names, cells))
+            row[""] = cells[0] if cells else ""
+            rows.append(row)
+            i += 1
+        if wanted <= set(names):
+            tables.append(rows)
+    return tables
 
 
 # ----------------------------- test parsing -----------------------------

@@ -2,44 +2,15 @@
 
 **File:** `.specs/STATE.md`
 
-A single file with two section-scoped parts. Each section has its own lifecycle; writes are always targeted - never whole-file overwrites.
+The file holds one thing this skill writes: the `## Handoff` snapshot, so paused work can resume. Writes are always targeted at that section - never whole-file overwrites.
+
+**Decisions do not live here.** Every Decision is written into a Grilling Record under `.specs/decisions/` and found through the read rule in [decisions.md](decisions.md). This file never gains a new decision entry.
+
+An older `STATE.md` may still hold a `## Decisions` section with numbered entries. That section is a legacy decision source: [decisions.md](decisions.md) section 3 says when to read it. Never add to it, edit it, reorder it or remove it.
 
 ---
 
 ## Sections
-
-### `## Decisions` - append-only log
-
-Records **project-level** decisions only: conventions, patterns, constraints, or cross-cutting technology choices that future features must follow or supersede.
-
-**Not project-level → stays in the feature's `design.md` Tech Decisions table.**  
-Heuristic: would a different feature need to know about this? If yes → project-level. If no → feature-local.
-
-**Record sparingly - the log stays useful only by staying small.** Even a project-level decision earns an `AD-NNN` entry only when all three hold:
-
-1. **Hard to reverse** - changing course later carries real cost.
-2. **Surprising without context** - a future reader will look at the result and wonder "why did they do it this way?"
-3. **The product of a real trade-off** - there were genuine alternatives and you chose one for specific reasons.
-
-If any one is missing, skip it: an easily-reversed choice you will just reverse; an unsurprising one nobody questions; a no-alternative choice records nothing beyond "we did the obvious thing." What typically qualifies: architectural shape, integration patterns between areas, technology choices that carry lock-in, boundary and ownership decisions, and deliberate deviations from the obvious path. A choice that clears all three but is only feature-local still stays in `design.md`.
-
-**Format** (one entry per decision):
-
-```markdown
-## Decisions
-
-### AD-001
-- **Decision**: [what was decided - one sentence]
-- **Reason**: [why this option was chosen]
-- **Trade-off**: [what was given up]
-- **Scope**: [which features / packages / layers this governs]
-- **Date**: YYYY-MM-DD
-- **Status**: active | superseded by AD-NNN
-```
-
-**Supersession rule:** When a new decision replaces an old one, append a new `AD-NNN` entry and update the old entry's `status` field to `superseded by AD-NNN`. Never delete old entries - the history is the audit trail.
-
----
 
 ### `## Handoff` - pause snapshot (~500 tokens, overwritten each pause)
 
@@ -67,16 +38,12 @@ Captures mid-task / in-flight state so work can resume without re-reading the fu
 ```markdown
 # STATE
 
-## Decisions
-
-[AD-NNN entries…]
-
 ## Handoff
 
 [latest snapshot…]
 ```
 
-If the file does not yet exist, create it with both section headers and empty bodies.
+If the file does not yet exist, create it with the `## Handoff` header and an empty body. Do not add a `## Decisions` header to a new file.
 
 ---
 
@@ -84,28 +51,17 @@ If the file does not yet exist, create it with both section headers and empty bo
 
 | Trigger | Section | Operation |
 | ------- | ------- | --------- |
-| Design phase, Step 1 (Load Context) | `## Decisions` | **Read** - conform to active decisions or supersede |
-| Design phase, Tech Decisions step | `## Decisions` | **Append** - only for project-level decisions |
 | Pause work / end of session | `## Handoff` | **Replace** - overwrite Handoff section only |
 | Resume work / start of session | `## Handoff` | **Read** - load snapshot, then reconcile with git before acting |
-| Resume work / start of session | `## Decisions` | **Read** - re-confirm active constraints before designing |
+| Any phase that reads Decisions | Grilling Records, not this file | **Read** through [decisions.md](decisions.md); an old `## Decisions` section here is read only as a legacy decision source |
 
 ---
 
 ## Section-scoped write rule (critical)
 
-One file holds two lifecycles. Writes MUST target their section only:
+A pause **replaces** `## Handoff` and touches nothing else. Locate the `## Handoff` header and replace only the content between it and the next `##` header (or end of file). Never overwrite the full file.
 
-- **Design appends** to `## Decisions`. It MUST NOT touch `## Handoff`.
-- **Pause replaces** `## Handoff`. It MUST NOT rewrite, reorder, or drop any entry in `## Decisions`.
-
-The correct technique: locate the target section header, replace only the content between it and the next `##` header (or end of file). Never overwrite the full file.
-
-Violating this rule causes one of two failures:
-1. A pause write clobbers the decisions log → decisions are silently lost.
-2. A design append touches the handoff snapshot → mid-task state is corrupted.
-
-Both are silent data loss. The section-scoped write rule is the single correctness invariant of this memory layer.
+An older file may hold a legacy `## Decisions` section above the Handoff. A whole-file overwrite would silently destroy it, and those entries exist nowhere else. The section-scoped write rule is the single correctness invariant of this memory layer.
 
 ---
 
@@ -120,8 +76,8 @@ Both are silent data loss. The section-scoped write rule is the single correctne
 
 ### Resume
 
-1. Read `.specs/STATE.md` - both sections.
-2. Re-confirm active decisions from `## Decisions` - nothing superseded since last session?
+1. Read the `## Handoff` section of `.specs/STATE.md`.
+2. Re-run the read rule in [decisions.md](decisions.md) for the paths the work touches - a Decision may have been added or rewritten since the last session.
 3. Read `## Handoff` - treat it as a **hypothesis** for feature, phase/task, next step, blockers, uncommitted files, branch - not as ground truth by itself.
 4. **Reconcile with git before editing anything:**
    - Current branch vs Handoff `Branch`
@@ -134,11 +90,3 @@ Both are silent data loss. The section-scoped write rule is the single correctne
    - Stale or missing Handoff → rebuild next-step from git + `tasks.md`, then propose that to the user
    - Unexplained local changes you cannot map to the current task → STOP and ask; do not discard them
 6. Propose the reconciled next step to the user before writing any code.
-
----
-
-## AD-NNN numbering
-
-- Numbers are sequential, project-scoped, and permanent - never reused.
-- The counter starts at `AD-001`. Check existing entries before assigning the next number.
-- If `.specs/STATE.md` does not exist, the first decision is `AD-001`.

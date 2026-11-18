@@ -13,7 +13,8 @@
    - Runs the **spec-anchored outcome check** and the **discrimination sensor** (both described below)
    - Writes `.specs/features/[feature]/validation.md` with the full evidence report
    - Returns a compact verdict + ranked gap list to the orchestrator in chat
-   - Gaps become **fix tasks** routed back to an implementer; re-verification follows with a maximum of **3 fix→re-verify iterations** before escalating to the user
+   - Gaps become **fix tasks**, all in **one fix Ticket for that round** (section 8), routed back to an implementer; re-verification follows with a maximum of **3 fix→re-verify iterations** before escalating to the user
+   - A PASS ends Execute. The orchestrator tells the human that `/code-review` is available and stops; neither the Verifier nor the orchestrator runs it
 
 3. **Interactive UAT (for user-facing features only):** The feature has complex user-facing behavior where human judgment matters (UI flows, interaction patterns, visual design). For backend-only or infrastructure work, automated checks are sufficient.
 
@@ -32,9 +33,12 @@ Go through tasks.md:
 
 ### 2. Scenario-Anchored Check
 
-First run the mechanics: `python3 <skill-dir>/scripts/validate_scenarios.py <feature> --since <diff base>`. Any error (Scenario without a test, unknown ID, drifted text, a test claiming several Scenarios, an Unclaimed Test the Change touched) is a gap.
+Every Scenario in `spec.md` has a proof type: `test` (the default) or `inspect`, set by the `**Proof**:` line after the Scenario. The Verifier checks every Scenario of either type and records each one in the Scenario-Anchored table below. This is the only results table: exactly one row per Scenario, whatever its proof type.
 
-Then, for each Scenario in `spec.md`, the Verifier re-derives the **spec-defined expected outcome** from its Then steps and confirms the claiming test's actual assertion matches it:
+For each Scenario, re-derive the **spec-defined expected outcome** from its Then steps, then:
+
+- **`test` Scenario:** confirm the claiming test's actual assertion matches that outcome. The evidence cell holds the test's `file:line` and the assertion expression.
+- **`inspect` Scenario:** read the final files the Scenario is about (prompts, configuration, infrastructure code) and decide whether they produce that outcome. The evidence cell holds the `file:line` read and a one-sentence reason, in place of a test assertion. Infrastructure code may cite command output instead. An `inspect` Scenario has no test by design; that alone is never a gap.
 
 ```markdown
 ### P1: [Story Title]
@@ -44,13 +48,18 @@ Then, for each Scenario in `spec.md`, the Verifier re-derives the **spec-defined
 | Scenario | Spec-defined outcome (Then) | `file:line` + assertion expression | Result |
 | -------- | --------------------------- | ---------------------------------- | ------ |
 | [FEAT]-01.S1 | [precise value/state from spec] | `path/to/test.ts:42` - `expect(result.field).toBe(expected)` | ✅ PASS / ❌ GAP / ⚠️ Spec-precision gap |
+| [FEAT]-02.S1 | [precise value/state from spec] | `skills/demo/SKILL.md:12` - step 3 states the rule as the Then step requires | ✅ PASS / ❌ GAP |
 ```
+
+After the table is written to `validation.md`, run the mechanics on all Scenarios: `python3 <skill-dir>/scripts/validate_scenarios.py <feature> --since <diff base>`. It reads the `Scenario` and `Result` columns of this table by header name, so keep those two header names. Any error is a gap: a `test` Scenario without a test, an `inspect` Scenario without exactly one row whose Result is `PASS`, an unknown ID, drifted text, a test claiming several Scenarios, or an Unclaimed Test the Change touched.
 
 **Rules:**
 
 - Where the spec defines a precise outcome (specific status code, field value, error message, state), the test assertion MUST target that exact outcome - not just that an assertion exists.
 - Where the spec does NOT define a precise outcome, mark as **⚠️ Spec-precision gap** and flag it in the report. Do NOT silently pass a vague assertion.
-- Evidence-or-zero: a criterion with no `file:line` citation counts as NOT covered.
+- Evidence-or-zero: a criterion with no `file:line` citation counts as NOT covered. This holds for both proof types.
+- One row per Scenario. Two rows for the same ID make `validate_scenarios.py` fail, whichever table they sit in, so keep every Scenario in this one table.
+- An `inspect` Result is `PASS` or `GAP`. Interactive UAT (level 3 above) is a separate step for user-facing features; it is not a proof type.
 
 ### 3. Check Edge Cases
 
@@ -96,7 +105,7 @@ The sensor provides the empirical guarantee that the tests can actually detect r
 4. **Run the tests** that cover the mutated code (against the scratch). Use the Quick or Full gate command from tasks.md.
 5. **Confirm the mutant is killed** (tests FAIL). Discard the scratch (remove worktree or delete temp copies).
 6. **Verify isolation.** Re-run `git status --porcelain` on the real worktree and confirm it matches the baseline from step 2. If it differs, STOP - restore the real tree before continuing, and treat the sensor run as invalid.
-7. **If a mutant survives** (tests still pass after the fault), the tests are not discriminating for that behavior - add a fix task to strengthen the assertion.
+7. **If a mutant survives** (tests still pass after the fault), the tests are not discriminating for that behavior - report it as a gap; it becomes a fix task to strengthen the assertion, in the round's fix Ticket (section 8).
 
 **Tiering (proportional, not optional):**
 
@@ -171,9 +180,20 @@ For each issue found during UAT or from the Verifier:
    - Where: File paths
    - Verify: How to prove the fix works
    - Done when: Acceptance criteria for the fix
-3. **Present fix plan** - Show all fix tasks to user for approval
+3. **Put the round's fix tasks into one fix Ticket** - see below
+4. **Present fix plan** - Show the fix Ticket and all its fix tasks to user for approval
 
 Fix tasks follow the same format as regular tasks and can be executed with the implement phase.
+
+**One fix Ticket per round.** The Verifier only reports: it lists the ranked gaps in `validation.md` and in its chat summary, and edits nothing else. The orchestrator (the main session) then writes the fix work into `tasks.md`, following [tickets.md](tickets.md) section 2:
+
+- Every gap of the round becomes a fix task appended to the Task Breakdown, with a `**Fixes**` field naming the gap.
+- All fix tasks of the round go into **one new Ticket**, appended to `## Tickets` with the next free `K` number and named after the round: `### K<n>: Fix Verifier round <r>`. Its `**Tasks**` field lists every fix task of the round.
+- The fix Ticket is `**Blocked by**` the Tickets it repairs (the ones whose Scenarios have the gaps), and its `**Covers**` field names the Scenarios it repairs.
+- A finished Ticket is never reopened, and no fix task stays outside a Ticket: `validate_tasks.py` fails a task that is listed in no Ticket.
+- A later round that still finds gaps adds its own fix Ticket (`Fix Verifier round 2`).
+
+Example: `tasks.md` has Tickets `K1` and `K2`. Verifier round 1 reports two gaps, in two Scenarios that `K2` covers. The orchestrator appends two fix tasks and the Ticket `### K3: Fix Verifier round 1`, whose `**Tasks**` lists both fix tasks, whose `**Blocked by**` is `K2`, and whose `**Covers**` names the two Scenarios. Issues found in interactive UAT in the same round join that Ticket.
 
 **Guardrail:** Maximum 3 diagnostic iterations per issue. If root cause isn't found after 3 attempts, flag for human investigation. The same 3-iteration bound applies to the Verifier's fix→re-verify cycle: if gaps persist after 3 rounds, escalate to the user rather than continuing to loop.
 
@@ -182,7 +202,7 @@ Fix tasks follow the same format as regular tasks and can be executed with the i
 After all checks complete, the Verifier MUST:
 
 1. **Write the persisted report** to `.specs/features/[feature]/validation.md` (see template below). This file is the evidence artifact - it survives the session and can be referenced by CI, reviewers, or future agents.
-2. **Return a compact summary in chat** to the orchestrator (see Compact Chat Summary section below). The orchestrator surfaces it to the user and routes any ranked gaps to fix tasks.
+2. **Return a compact summary in chat** to the orchestrator (see Compact Chat Summary section below). The orchestrator surfaces it to the user and turns any ranked gaps into fix tasks in one fix Ticket for the round (section 8). On PASS, the orchestrator tells the human that `/code-review` is available and stops; it never runs `/code-review` or dispatches the Change Reviewer ([implement.md](implement.md) step 9).
 
 **Deterministic backing (run it, do not eyeball it).** After writing the report, run `python3 <skill-dir>/scripts/validate_state.py <feature>`. It confirms the report is real - present, verdict filled to PASS, and backed by at least one `file:line` evidence citation - so a missing, hollow, placeholder, or FAIL report cannot slip through as done. A non-zero exit means the feature is NOT done: repair the report or route the FAIL gaps to fix tasks, then re-run. This is the closing gate of Execute and runs automatically, the same way the lessons layer runs at distillation; it is never a manual step. If no code-execution tool is available, confirm the same by reading `validation.md`.
 
@@ -235,13 +255,16 @@ The Verifier returns this block to the orchestrator after completing all checks:
 
 ## Scenario-Anchored Check
 
-`validate_scenarios.py <feature> --since <base>`: [0 errors | list]
+One row per Scenario, `test` and `inspect` alike. An `inspect` row cites the `file:line` read and a one-sentence reason in place of a test assertion.
 
 | Scenario | Spec-defined outcome (Then) | `file:line` + assertion | Result |
 | -------- | --------------------------- | ----------------------- | ------ |
 | PAY-01.S1 | [precise value/state from spec] | `path/to/test.ts:42` - `expect(result.field).toBe(expected)` | ✅ PASS |
 | PAY-02.S1 | [expected value]     | `path/to/test.ts:88` - `expect(res.status).toBe(400)` | ✅ PASS |
 | PAY-03.S1 | not precisely defined in spec | - | ⚠️ Spec-precision gap |
+| PAY-04.S1 | [the rule the prompt must state] | `skills/pay/SKILL.md:12` - step 3 states the rule as the Then step requires | ✅ PASS |
+
+`validate_scenarios.py <feature> --since <base>` (run after this table is written): [0 errors | list]
 
 **Status**: ✅ All Scenarios proven / ❌ Gaps present / ⚠️ Spec-precision gaps flagged
 
@@ -307,10 +330,12 @@ The Verifier returns this block to the orchestrator after completing all checks:
 
 ## Fix Plans (if issues found)
 
+**Fix Ticket for this round**: `K<n>: Fix Verifier round <r>` · Blocked by: [the Tickets it repairs] · Covers: [the Scenarios it repairs]
+
 ### Fix 1: [Issue description]
 
 - **Root cause**: [What's actually wrong]
-- **Fix task**: [Task definition]
+- **Fix task**: [Task definition, with `**Fixes**`; listed in the fix Ticket above]
 - **Priority**: [Blocker/Major/Minor/Cosmetic]
 
 ---
@@ -353,6 +378,8 @@ Update spec.md requirement statuses:
 - **WHEN/THEN = Test** - Each criterion is a test case
 - **Be specific** - "Doesn't work" isn't helpful
 - **Recommend fixes** - Don't just report problems, create fix tasks
+- **One fix Ticket per round** - all fix tasks of a Verifier round go into one new Ticket, Blocked by the Tickets it repairs
+- **PASS ends Execute** - the human is told `/code-review` is available; nobody runs it for them
 - **Quality check is mandatory** - Not optional
 - **Infer severity** - Never ask the user "how bad is this?"
 - **Max 3 diagnostic iterations** - Prevents infinite investigation loops

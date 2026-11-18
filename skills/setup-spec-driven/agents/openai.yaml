@@ -1,0 +1,5 @@
+interface:
+  display_name: "Setup Spec-Driven"
+  short_description: "Configure a repo for spec-driven"
+policy:
+  allow_implicit_invocation: false
